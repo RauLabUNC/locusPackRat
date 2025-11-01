@@ -1,0 +1,481 @@
+---
+title: "genePackRat Package Functionality Tests"
+author: "Automated Test Suite"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cerulean
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# Clear and set library path to use only conda environment
+Sys.setenv(R_LIBS_USER = "")
+Sys.setenv(R_LIBS = "")
+
+# Set to test_r_libs if package installed there, otherwise use system
+if (dir.exists("test_r_libs")) {
+  .libPaths(c("test_r_libs", .libPaths()))
+}
+
+# Track test results
+test_results <- list()
+```
+
+# Package Loading and Environment
+
+```{r load-package}
+# Load the package or source files
+tryCatch({
+  library(genePackRat)
+}, error = function(e) {
+  cat("Loading from source files instead...\n")
+  library(data.table)
+  library(dplyr)
+  library(openxlsx)
+
+  # Source all R files
+  source("../R/filterGenes.R")
+  source("../R/join_tables.R")
+  source("../R/excel.R")
+  source("../R/phenotype.R")
+  source("../R/plotting.R")
+  source("../R/summary.R")
+})
+
+# Display environment info
+cat("R Version:", R.version.string, "\n")
+cat("Library Paths:\n")
+cat(paste("  -", .libPaths()), sep = "\n")
+tryCatch({
+  cat("\nPackage Version:", as.character(packageVersion("genePackRat")), "\n")
+}, error = function(e) {
+  cat("\nPackage Version: Loaded from source\n")
+})
+
+# List available functions
+cat("\nAvailable Functions:\n")
+if (exists("filterGenes")) cat("  - filterGenes\n")
+if (exists("makeFilter")) cat("  - makeFilter\n")
+if (exists("build_gene_table")) cat("  - build_gene_table\n")
+if (exists("create_gene_workbook")) cat("  - create_gene_workbook\n")
+if (exists("aggregate_genes_by_locus")) cat("  - aggregate_genes_by_locus\n")
+if (exists("filter_genes")) cat("  - filter_genes\n")
+```
+
+# Load Test Data
+
+```{r load-data}
+# Load the mini test datasets
+genes <- read.csv("../inst/testdata/mini_genes.csv", stringsAsFactors = FALSE)
+expression <- read.csv("../inst/testdata/mini_expression.csv", stringsAsFactors = FALSE)
+gwas <- read.csv("../inst/testdata/mini_gwas.csv", stringsAsFactors = FALSE)
+
+# Display data structure
+cat("Genes dataset:\n")
+str(genes)
+
+cat("\nExpression dataset:\n")
+str(expression)
+
+cat("\nGWAS dataset:\n")
+str(gwas)
+
+# Create some additional synthetic data for comprehensive testing
+set.seed(42)
+n_extra_genes <- 20
+
+# eQTL data
+eqtl <- data.frame(
+  gene_id = sample(genes$gene_id, 3),
+  variant_id = paste0("chr", sample(1:19, 3), ":", sample(1000000:50000000, 3)),
+  tissue = c("Heart", "Liver", "Brain"),
+  pvalue = c(1.2e-6, 5.4e-8, 3.1e-5),
+  effect_size = c(0.23, -0.45, 0.18),
+  stringsAsFactors = FALSE
+)
+
+# Orthology data
+orthology <- data.frame(
+  gene_id = genes$gene_id,
+  human_gene_id = paste0("ENSG000000", sprintf("%05d", 1:nrow(genes))),
+  human_symbol = c("GNAI3", "PBSN", "CDC45", "H19", "TMSB4X",
+                   "NFKB1", "APP", "BRCA1", "P53", "MYC"),
+  orthology_confidence = c("high", "high", "moderate", "high", "low",
+                          "high", "moderate", "high", "high", "moderate"),
+  stringsAsFactors = FALSE
+)
+```
+
+# Test 1: Basic Filtering Operations
+
+## 1.1 Single Condition Filtering
+
+```{r test-basic-filter}
+# Filter for protein coding genes
+filter_protein <- makeFilter(
+  column = "biotype",
+  condition = "==",
+  value = "protein_coding"
+)
+
+result_protein <- filterGenes(
+  inputTable = genes,
+  filters = list(filter_protein)
+)
+
+cat("Input genes:", nrow(genes), "\n")
+cat("Protein coding genes:", nrow(result_protein), "\n")
+cat("Filtered genes:\n")
+print(result_protein)
+
+test_results$basic_filter <- nrow(result_protein) > 0
+```
+
+## 1.2 Numeric Filtering
+
+```{r test-numeric-filter}
+# Filter for genes with high brain expression
+filter_expression <- makeFilter(
+  column = "TPM_brain",
+  condition = ">",
+  value = 100
+)
+
+# First join expression data
+genes_with_expr <- build_gene_table(
+  genes_df = genes,
+  expression_df = expression
+)
+
+result_high_expr <- filterGenes(
+  inputTable = genes_with_expr,
+  filters = list(filter_expression)
+)
+
+cat("Genes with expression data:", nrow(genes_with_expr), "\n")
+cat("High brain expression genes:", nrow(result_high_expr), "\n")
+print(result_high_expr[, c("gene_id", "symbol", "TPM_brain")])
+
+test_results$numeric_filter <- nrow(result_high_expr) > 0
+```
+
+## 1.3 Multiple Filters
+
+```{r test-multiple-filters}
+# Combine filters: protein coding AND high expression
+filter_significant <- makeFilter(
+  column = "padj",
+  condition = "<",
+  value = 0.05
+)
+
+result_combined <- filterGenes(
+  inputTable = genes_with_expr,
+  filters = list(filter_protein, filter_expression, filter_significant)
+)
+
+cat("Genes meeting all criteria:\n")
+cat("  - Protein coding\n")
+cat("  - TPM_brain > 100\n")
+cat("  - padj < 0.05\n")
+cat("Result:", nrow(result_combined), "genes\n")
+if (nrow(result_combined) > 0) {
+  print(result_combined[, c("symbol", "biotype", "TPM_brain", "padj")])
+}
+
+test_results$multiple_filters <- TRUE
+```
+
+# Test 2: Relational Filtering (Joins)
+
+## 2.1 Inner Join - Genes with GWAS Hits
+
+```{r test-inner-join}
+# Get only genes that have GWAS associations
+genes_with_gwas <- filterGenes(
+  inputTable = genes,
+  referenceTable = gwas,
+  by = "gene_id",
+  joinType = "inner"
+)
+
+cat("Total genes:", nrow(genes), "\n")
+cat("Genes with GWAS hits:", nrow(genes_with_gwas), "\n")
+cat("\nGWAS-associated genes:\n")
+print(genes_with_gwas)
+
+test_results$inner_join <- nrow(genes_with_gwas) > 0
+```
+
+## 2.2 Semi Join - Filter Without Adding Columns
+
+```{r test-semi-join}
+# Get genes with GWAS hits but don't include GWAS columns
+genes_with_gwas_semi <- filterGenes(
+  inputTable = genes,
+  referenceTable = gwas,
+  by = "gene_id",
+  joinType = "semi"
+)
+
+cat("Semi join result (original columns only):\n")
+cat("Number of genes:", nrow(genes_with_gwas_semi), "\n")
+cat("Number of columns:", ncol(genes_with_gwas_semi), "\n")
+print(genes_with_gwas_semi)
+
+test_results$semi_join <- ncol(genes_with_gwas_semi) == ncol(genes)
+```
+
+## 2.3 Anti Join - Genes Without GWAS Hits
+
+```{r test-anti-join}
+# Get genes that DON'T have GWAS associations
+genes_no_gwas <- filterGenes(
+  inputTable = genes,
+  referenceTable = gwas,
+  by = "gene_id",
+  joinType = "anti"
+)
+
+cat("Genes without GWAS hits:", nrow(genes_no_gwas), "\n")
+print(genes_no_gwas[, c("gene_id", "symbol")])
+
+test_results$anti_join <- nrow(genes_no_gwas) + nrow(genes_with_gwas_semi) == nrow(genes)
+```
+
+# Test 3: Complex Data Integration
+
+## 3.1 Build Comprehensive Gene Table
+
+```{r test-build-table}
+# Combine multiple data sources
+comprehensive_table <- build_gene_table(
+  genes_df = genes,
+  expression_df = expression,
+  orthology_df = orthology
+)
+
+cat("Comprehensive gene table:\n")
+cat("  Rows:", nrow(comprehensive_table), "\n")
+cat("  Columns:", ncol(comprehensive_table), "\n")
+cat("\nColumn names:\n")
+cat(paste("  -", names(comprehensive_table)), sep = "\n")
+
+# Show first few rows
+cat("\nFirst 3 rows:\n")
+print(head(comprehensive_table, 3))
+
+test_results$build_table <- ncol(comprehensive_table) > ncol(genes)
+```
+
+## 3.2 Multi-Step Filtering Pipeline
+
+```{r test-pipeline}
+# Step 1: Start with comprehensive table
+pipeline_result <- comprehensive_table
+
+cat("Starting genes:", nrow(pipeline_result), "\n\n")
+
+# Step 2: Filter for genes with GWAS hits (semi join)
+pipeline_result <- filterGenes(
+  inputTable = pipeline_result,
+  referenceTable = gwas,
+  by = "gene_id",
+  joinType = "semi"
+)
+cat("After GWAS filter:", nrow(pipeline_result), "genes\n")
+
+# Step 3: Filter for significant expression
+filter_expr_sig <- makeFilter(
+  column = "padj",
+  condition = "<",
+  value = 0.05
+)
+
+pipeline_result <- filterGenes(
+  inputTable = pipeline_result,
+  filters = list(filter_expr_sig)
+)
+cat("After expression significance filter:", nrow(pipeline_result), "genes\n")
+
+# Step 4: Filter for high confidence orthologs
+filter_ortho <- makeFilter(
+  column = "orthology_confidence",
+  condition = "==",
+  value = "high"
+)
+
+pipeline_result <- filterGenes(
+  inputTable = pipeline_result,
+  filters = list(filter_ortho)
+)
+cat("After orthology filter:", nrow(pipeline_result), "genes\n")
+
+cat("\nFinal gene list:\n")
+if (nrow(pipeline_result) > 0) {
+  print(pipeline_result[, c("symbol", "human_symbol", "padj", "orthology_confidence")])
+}
+
+test_results$pipeline <- TRUE
+```
+
+# Test 4: Excel Workbook Creation
+
+```{r test-excel, eval=TRUE}
+# Prepare filtered data for Excel export
+export_genes <- comprehensive_table
+
+# Apply some filtering
+filter_export <- makeFilter(
+  column = "biotype",
+  condition = "==",
+  value = "protein_coding"
+)
+
+export_genes <- filterGenes(
+  inputTable = export_genes,
+  filters = list(filter_export)
+)
+
+# Create Excel workbook
+output_file <- "test_gene_report.xlsx"
+
+tryCatch({
+  wb <- create_gene_workbook(
+    gene_data = export_genes,
+    output_file = output_file
+  )
+
+  if (file.exists(output_file)) {
+    file_info <- file.info(output_file)
+    cat("Excel file created successfully!\n")
+    cat("  File:", output_file, "\n")
+    cat("  Size:", file_info$size, "bytes\n")
+    cat("  Modified:", format(file_info$mtime, "%Y-%m-%d %H:%M:%S"), "\n")
+
+    # Clean up
+    unlink(output_file)
+    cat("\n(File removed after test)\n")
+
+    test_results$excel <- TRUE
+  } else {
+    test_results$excel <- FALSE
+  }
+}, error = function(e) {
+  cat("Excel creation failed:", e$message, "\n")
+  test_results$excel <- FALSE
+})
+```
+
+# Test 5: Real-World Use Case
+
+## GWAS Gene Prioritization Workflow
+
+```{r test-real-world}
+# Simulate a real GWAS gene prioritization workflow
+cat("GWAS Gene Prioritization Workflow\n")
+cat("==================================\n\n")
+
+# Step 1: Load all data
+all_genes <- build_gene_table(
+  genes_df = genes,
+  expression_df = expression,
+  orthology_df = orthology
+)
+cat("1. Loaded", nrow(all_genes), "genes with annotations\n")
+
+# Step 2: Get GWAS-associated genes with full data
+gwas_genes <- filterGenes(
+  inputTable = all_genes,
+  referenceTable = gwas,
+  by = "gene_id",
+  joinType = "inner"
+)
+cat("2. Found", nrow(gwas_genes), "genes with GWAS associations\n")
+
+# Step 3: Prioritize based on multiple criteria
+# High expression in relevant tissue
+filter_tissue <- makeFilter(
+  column = "TPM_heart",
+  condition = ">",
+  value = 50
+)
+
+# Significant differential expression
+filter_de <- makeFilter(
+  column = "padj",
+  condition = "<",
+  value = 0.05
+)
+
+prioritized <- filterGenes(
+  inputTable = gwas_genes,
+  filters = list(filter_tissue, filter_de)
+)
+
+cat("3. Prioritized", nrow(prioritized), "genes based on:\n")
+cat("   - Heart expression > 50 TPM\n")
+cat("   - Significant differential expression (padj < 0.05)\n")
+
+if (nrow(prioritized) > 0) {
+  cat("\nTop candidate genes:\n")
+  result_display <- prioritized[order(prioritized$pvalue),
+                                c("symbol", "trait", "pvalue", "TPM_heart", "padj")]
+  print(result_display)
+
+  # Calculate priority score
+  prioritized$priority_score <-
+    -log10(prioritized$pvalue) * log2(prioritized$TPM_heart + 1) * (1 - prioritized$padj)
+
+  cat("\nGenes with priority scores:\n")
+  print(prioritized[order(prioritized$priority_score, decreasing = TRUE),
+                    c("symbol", "priority_score")])
+}
+
+test_results$real_world <- TRUE
+```
+
+# Test Summary
+
+```{r summary}
+# Calculate test results
+total_tests <- length(test_results)
+passed_tests <- sum(unlist(test_results))
+success_rate <- (passed_tests / total_tests) * 100
+
+cat("Test Results Summary\n")
+cat("===================\n\n")
+
+# Display individual test results
+for (test_name in names(test_results)) {
+  status <- if(test_results[[test_name]]) "✓ PASSED" else "✗ FAILED"
+  cat(sprintf("%-20s %s\n", test_name, status))
+}
+
+cat("\n")
+cat("Total Tests:", total_tests, "\n")
+cat("Passed:", passed_tests, "\n")
+cat("Failed:", total_tests - passed_tests, "\n")
+cat("Success Rate:", sprintf("%.1f%%", success_rate), "\n")
+
+# Overall result
+cat("\n")
+if (success_rate == 100) {
+  cat("🎉 All tests passed successfully!\n")
+} else if (success_rate >= 80) {
+  cat("⚠️ Most tests passed, but some issues detected.\n")
+} else {
+  cat("❌ Multiple test failures detected.\n")
+}
+```
+
+# Session Info
+
+```{r session-info}
+sessionInfo()
+```

@@ -5,3 +5,4 @@ channels:
 dependencies:
   - r-base=4.4.0
   - r-devtools
+  - r-remotes

@@ -45,6 +45,18 @@ create_gene_workbook <- function(gene_data,
                                 conditional_format = TRUE,
                                 hyperlinks = TRUE) {
 
+  # Helper function to safely subset columns
+  subset_columns <- function(data, cols) {
+    cols <- intersect(cols, names(data))
+    if (length(cols) == 0) return(NULL)
+
+    if (inherits(data, "data.table")) {
+      return(data[, ..cols])
+    } else {
+      return(data[, cols, drop = FALSE])
+    }
+  }
+
   # Default sheet configuration
   if (is.null(sheet_config)) {
     sheet_config <- list(
@@ -96,13 +108,16 @@ create_gene_workbook <- function(gene_data,
     sheet_name <- "Overview"
     openxlsx::addWorksheet(wb, sheet_name)
     
-    # Select key columns
-    overview_cols <- c("gene", "biotype", "chromosome", "start", "end",
-                      "human_ortholog", "expression", "has_eqtl", 
+    # Select key columns - try different gene column names
+    gene_col <- intersect(c("gene_id", "gene", "symbol", "gene_symbol"), names(gene_data))[1]
+    if (is.na(gene_col)) gene_col <- names(gene_data)[1]  # fallback to first column
+
+    overview_cols <- c(gene_col, "biotype", "chromosome", "chr", "start", "end",
+                      "human_ortholog", "human_symbol", "expression", "has_eqtl",
                       "n_variants", "n_phenotypes")
-    overview_cols <- intersect(overview_cols, names(gene_data))
-    
-    overview_data <- gene_data[, overview_cols]
+
+    overview_data <- subset_columns(gene_data, overview_cols)
+    if (is.null(overview_data)) overview_data <- gene_data
     
     openxlsx::writeData(wb, sheet_name, overview_data, 
                        startRow = 1, startCol = 1, 
@@ -150,10 +165,14 @@ create_gene_workbook <- function(gene_data,
     sheet_name <- "Expression"
     openxlsx::addWorksheet(wb, sheet_name)
     
-    expr_cols <- c("gene", names(gene_data)[grepl("express|CPM|TPM|FPKM|eqtl", 
-                                                  names(gene_data), 
-                                                  ignore.case = TRUE)])
-    expr_data <- gene_data[, intersect(expr_cols, names(gene_data))]
+    gene_col <- intersect(c("gene_id", "gene", "symbol", "gene_symbol"), names(gene_data))[1]
+    if (is.na(gene_col)) gene_col <- names(gene_data)[1]
+
+    expr_cols <- c(gene_col, names(gene_data)[grepl("express|CPM|TPM|FPKM|eqtl",
+                                                    names(gene_data),
+                                                    ignore.case = TRUE)])
+    expr_data <- subset_columns(gene_data, expr_cols)
+    if (is.null(expr_data)) expr_data <- gene_data
     
     # Sort by expression if available
     if (any(grepl("CPM|TPM|FPKM", names(expr_data)))) {
@@ -184,10 +203,14 @@ create_gene_workbook <- function(gene_data,
     sheet_name <- "Variants"
     openxlsx::addWorksheet(wb, sheet_name)
     
-    var_cols <- c("gene", names(gene_data)[grepl("variant|mutation|SNP|missense|nonsense", 
-                                                 names(gene_data), 
-                                                 ignore.case = TRUE)])
-    var_data <- gene_data[, intersect(var_cols, names(gene_data))]
+    gene_col <- intersect(c("gene_id", "gene", "symbol", "gene_symbol"), names(gene_data))[1]
+    if (is.na(gene_col)) gene_col <- names(gene_data)[1]
+
+    var_cols <- c(gene_col, names(gene_data)[grepl("variant|mutation|SNP|missense|nonsense",
+                                                   names(gene_data),
+                                                   ignore.case = TRUE)])
+    var_data <- subset_columns(gene_data, var_cols)
+    if (is.null(var_data)) var_data <- gene_data
     
     # Filter to genes with variants if column exists
     if ("n_variants" %in% names(var_data)) {
@@ -208,10 +231,14 @@ create_gene_workbook <- function(gene_data,
     sheet_name <- "Phenotypes"
     openxlsx::addWorksheet(wb, sheet_name)
     
-    pheno_cols <- c("gene", names(gene_data)[grepl("phenotype|disease|trait|syndrome", 
-                                                   names(gene_data), 
-                                                   ignore.case = TRUE)])
-    pheno_data <- gene_data[, intersect(pheno_cols, names(gene_data))]
+    gene_col <- intersect(c("gene_id", "gene", "symbol", "gene_symbol"), names(gene_data))[1]
+    if (is.na(gene_col)) gene_col <- names(gene_data)[1]
+
+    pheno_cols <- c(gene_col, names(gene_data)[grepl("phenotype|disease|trait|syndrome",
+                                                     names(gene_data),
+                                                     ignore.case = TRUE)])
+    pheno_data <- subset_columns(gene_data, pheno_cols)
+    if (is.null(pheno_data)) pheno_data <- gene_data
     
     # Filter to genes with phenotypes if column exists
     if ("n_phenotypes" %in% names(pheno_data)) {

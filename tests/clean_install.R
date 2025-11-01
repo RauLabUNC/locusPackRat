@@ -2,11 +2,45 @@
 
 # Test clean installation of genePackRat from GitHub
 
+# Clear any existing R library paths to ensure clean environment
+Sys.setenv(R_LIBS_USER = "")
+Sys.setenv(R_LIBS = "")
+
+# Create a local library directory for this test
+test_lib <- file.path(getwd(), "test_r_libs")
+if (!dir.exists(test_lib)) {
+  dir.create(test_lib, recursive = TRUE)
+}
+
+# Set library paths - local test library first, then system
+.libPaths(c(test_lib, .libPaths()))
+cat("Using R libraries from:\n")
+cat(paste("  -", .libPaths()), sep = "\n")
+cat("\n")
+
 cat("Testing genePackRat installation from GitHub...\n\n")
 
 # Install from GitHub
 cat("Installing genePackRat from GitHub...\n")
-devtools::install_github("RauLabUNC/genePackRat")
+
+# Clear any problematic PAT tokens that might interfere
+Sys.unsetenv("GITHUB_PAT")
+Sys.unsetenv("GITHUB_TOKEN")
+
+# Try installation with explicit parameters
+tryCatch({
+  devtools::install_github("RauLabUNC/genePackRat",
+                          auth_token = NULL,
+                          upgrade = "never",
+                          lib = test_lib)
+}, error = function(e) {
+  cat("\nError during installation:\n", e$message, "\n")
+  cat("\nTrying alternative installation method...\n")
+  # Try using remotes directly as a backup
+  remotes::install_github("RauLabUNC/genePackRat",
+                          upgrade = "never",
+                          lib = test_lib)
+})
 
 # Load the package
 cat("\nLoading genePackRat...\n")
@@ -35,6 +69,12 @@ if (length(help_obj) > 0) {
   cat("✗ Documentation NOT accessible\n")
 }
 
+if (exists("makeFilter")) {
+  cat("✓ makeFilter function found\n")
+} else {
+  cat("✗ makeFilter function NOT found\n")
+}
+
 # Quick functional test
 cat("\nRunning basic functional test...\n")
 test_genes <- data.frame(
@@ -44,9 +84,16 @@ test_genes <- data.frame(
 )
 
 # Test basic filtering
+# Create a simple filter
+filter <- makeFilter(
+  column = "expression",
+  condition = ">",
+  value = 30
+)
+
 result <- filterGenes(
   inputTable = test_genes,
-  filters = list(expression = list(column = "expression", operator = ">", value = 30))
+  filters = list(filter)
 )
 
 cat("Input genes:", nrow(test_genes), "\n")
