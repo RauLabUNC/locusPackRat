@@ -1,0 +1,7 @@
+name: test_genePackRat
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - r-base=4.4.0
+  - r-devtools
