@@ -35,6 +35,7 @@ scan_data <- list(
     LOD = lod_scores,                      # Named vector
     chr = rep(1, 101),                     # Vector
     pos = list(Mb = positions_mb),         # List with Mb element
+    loci = marker_names,                   # Character vector of marker names
     allele.effects = allele_effects        # Matrix
   )
 )

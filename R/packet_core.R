@@ -1,68 +1,27 @@
 #' Generate Locus Zoom Plot
 #'
-#' Creates a multi-panel plotgardener figure showing QTL mapping results,
-#' founder allele effects, overlapping loci, and genes in the region.
+#' Creates a comprehensive visualization of QTL mapping results including
+#' Manhattan plot, founder allele effects, overlapping QTL, and gene annotations.
 #'
-#' @param locus_info data.frame with one row containing:
-#'   \describe{
-#'     \item{chr}{Chromosome (numeric or character)}
-#'     \item{peak_pos}{Peak position in Mb}
-#'     \item{upper_pos_lod_drop}{Upper LOD drop boundary in Mb}
-#'     \item{lower_pos_lod_drop}{Lower LOD drop boundary in Mb}
-#'     \item{trait}{Trait name}
-#'     \item{drug}{Treatment condition}
-#'     \item{max_lod}{Maximum LOD score}
-#'   }
-#' @param scan_data List containing QTL scan results with elements:
-#'   \describe{
-#'     \item{LOD}{Named vector of LOD scores}
-#'     \item{chr}{Chromosome for each marker}
-#'     \item{pos}{List with \code{Mb} element giving positions in Mb}
-#'     \item{loci}{Marker names}
-#'     \item{allele.effects}{Matrix of founder allele effects}
-#'   }
-#' @param threshold_data List with significance thresholds, accessed as
-#'   \code{threshold_data[[paste0(trait, "_", drug, "_threshold")]]}
-#' @param genes_in_locus data.table of genes in the locus region
-#' @param top_genes_in_locus data.frame with columns:
-#'   \describe{
-#'     \item{gene}{Gene symbol}
-#'     \item{color}{Hex color for highlighting}
-#'   }
-#' @param overlapping_loci data.frame of other QTL in this cluster with columns:
-#'   \describe{
-#'     \item{chrom}{Chromosome with "chr" prefix}
-#'     \item{start}{Start position in bp}
-#'     \item{end}{End position in bp}
-#'     \item{strand}{Strand (typically "-")}
-#'     \item{traitXdrug}{Label for legend}
-#'   }
-#' @param output_file Character path to save PDF
-#' @param assembly Character, genome assembly object from plotgardener::assembly().
-#'   Default is mm39 (GRCm39).
-#' @param plot_params List with plotting dimensions. If NULL, uses defaults:
-#'   \describe{
-#'     \item{page_width}{Page width in inches (default: 10.5)}
-#'     \item{page_height}{Page height in inches (default: 5.5)}
-#'     \item{x}{X position for plots (default: 4.25)}
-#'     \item{plot_width}{Plot width in inches (default: 8)}
-#'     \item{plot_height}{Plot height per panel in inches (default: 1)}
-#'     \item{plot_y}{Starting Y position (default: 0.5)}
-#'   }
+#' @param locus_info Single-row data.frame with columns: chr, peak_pos, start_pos,
+#'   end_pos, trait, drug, max_lod
+#' @param scan_data QTL scan results list containing LOD scores, positions,
+#'   marker names, and allele effects matrix
+#' @param threshold_data List of significance thresholds indexed by trait_drug_threshold
+#' @param genes_in_locus data.table of genes within the locus region
+#' @param top_genes_in_locus data.frame with gene names and highlight colors
+#' @param overlapping_loci data.frame of other QTL in the region with columns:
+#'   chrom, start, end, strand, traitXdrug
+#' @param output_file Path for output PDF file
+#' @param assembly Optional genome assembly (defaults to mm39)
+#' @param plot_params Optional list of plot dimensions and positions
 #'
 #' @return Character path to saved PDF (invisible)
 #'
 #' @details
-#' This function creates a publication-quality locus plot with multiple panels:
-#' \enumerate{
-#'   \item Top panel: LOD scores with significance threshold
-#'   \item Middle panel: Founder allele effects for 8 CC strains
-#'   \item Third panel: Overlapping QTL regions (if any)
-#'   \item Bottom panel: Gene track with highlighted candidates
-#' }
-#'
-#' The plot includes legends for founder strains and overlapping loci, and
-#' highlights the significant region with a pink overlay.
+#' Generates a multi-panel plot with QTL mapping results, founder strain
+#' allele effects, and gene annotations. Handles up to 8 founder strains
+#' with distinct colors and multiple overlapping QTL regions.
 #'
 #' @importFrom plotgardener assembly pageCreate pgParams plotManhattan annoYaxis
 #'   plotText annoHighlight plotSignal plotRanges plotLegend plotGenes annoGenomeLabel
@@ -71,30 +30,20 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Load data
-#' scan_data <- readRDS("data/processed/trait_qtl/all_scans.rds")
-#' threshold_data <- readRDS("data/processed/trait_qtl/all_thresholds.rds")
-#' genes <- fread("data/processed/joinLoci/relational_tables/genes_mouse.csv")
-#'
-#' # Define locus
+#' # Basic usage with QTL data
 #' locus <- data.frame(
-#'   chr = 1, peak_pos = 105.5, upper_pos_lod_drop = 100,
-#'   lower_pos_lod_drop = 110, trait = "HR", drug = "Ctrl", max_lod = 8.5
+#'   chr = 1, peak_pos = 105.5, start_pos = 100,
+#'   end_pos = 110, trait = "HR", drug = "Ctrl", max_lod = 8.5
 #' )
 #'
-#' # Get genes in region
-#' genes_in_locus <- genes[chr == 1 & start_bp < 110e6 & end_bp > 100e6]
-#' top_genes <- data.frame(gene = c("GeneA", "GeneB"), color = "#e34a33")
-#'
-#' # Create plot
 #' generateLocusZoomPlot(
 #'   locus_info = locus,
 #'   scan_data = scan_data,
 #'   threshold_data = threshold_data,
-#'   genes_in_locus = genes_in_locus,
+#'   genes_in_locus = genes,
 #'   top_genes_in_locus = top_genes,
-#'   overlapping_loci = data.frame(),
-#'   output_file = "locus_zoom.pdf"
+#'   overlapping_loci = overlapping,
+#'   output_file = "qtl_locus.pdf"
 #' )
 #' }
 generateLocusZoomPlot <- function(
@@ -117,6 +66,35 @@ generateLocusZoomPlot <- function(
   if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
     stop("Package 'RColorBrewer' is required. Please install it.")
   }
+
+  # Define default color palettes
+  # CC strain colors (8 founder strains)
+  STRAIN_COLORS <- c(
+    "#1B9E77",  # A/J - teal
+    "#D95F02",  # C57BL/6J - orange
+    "#7570B3",  # 129S1/SvImJ - purple
+    "#E7298A",  # NOD/ShiLtJ - magenta
+    "#66A61E",  # NZO/HILtJ - green
+    "#E6AB02",  # CAST/EiJ - gold
+    "#A6761D",  # PWK/PhJ - brown
+    "#666666"   # WSB/EiJ - gray
+  )
+
+  # Overlapping loci colors (up to 8)
+  LOCI_COLORS <- c(
+    "#8DD3C7",  # light teal
+    "#FFFFB3",  # light yellow
+    "#BEBADA",  # light purple
+    "#FB8072",  # salmon
+    "#80B1D3",  # light blue
+    "#FDB462",  # peach
+    "#B3DE69",  # light green
+    "#FCCDE5"   # light pink
+  )
+
+  # Gene highlight colors
+  GENE_HIGHLIGHT_COLOR <- "#e34a33"  # red for highlighted genes
+  GENE_BACKGROUND_COLOR <- "#fdbb84"  # light orange for background genes
 
   # Set default assembly if not provided
   if (is.null(assembly)) {
@@ -193,7 +171,7 @@ generateLocusZoomPlot <- function(
   miqtl_df_for_plot <- data.frame(
     marker = names(current_scan_data$LOD),
     chr    = as.character(current_scan_data$chr),
-    pos    = as.integer(current_scan_data$pos$Mb * 1e6),  # Explicitly convert to integer
+    pos    = current_scan_data$pos$Mb * 1e6,  # Keep as numeric (plotManhattan prefers this)
     lod    = current_scan_data$LOD,
     stringsAsFactors = FALSE
   )
@@ -206,6 +184,9 @@ generateLocusZoomPlot <- function(
   ]
   miqtl_df_for_plot$chrom <- paste0("chr", miqtl_df_for_plot$chr)
   miqtl_df_for_plot$p <- 10^(-miqtl_df_for_plot$lod)
+
+  # Keep only columns plotManhattan needs (like transmute in working code)
+  miqtl_df_for_plot <- miqtl_df_for_plot[, c("chrom", "pos", "p")]
 
   # Determine y-axis limits
   threshold_key <- paste0(locus_info$trait, "_", locus_info$drug, "_threshold")
@@ -224,8 +205,6 @@ generateLocusZoomPlot <- function(
     width = plot_params$plot_width,
     height = plot_params$plot_height,
     just = c("center", "top"),
-    xfield = "pos",
-    yfield = "p",
     fill = "#a6cee3",
     sigCol = "#1f78b4",
     sigLine = TRUE,
@@ -281,6 +260,11 @@ generateLocusZoomPlot <- function(
   )
   markers <- markers[order(markers$start), ]
 
+  # Check if we have markers in range
+  if (nrow(markers) == 0) {
+    stop("No markers found in plot region for allele effects. Check plot boundaries.")
+  }
+
   allele_effects_transposed <- t(current_scan_data$allele.effects)
   allele_effects_transposed <- as.data.frame(allele_effects_transposed)
   allele_effects_transposed$marker <- rownames(allele_effects_transposed)
@@ -303,6 +287,8 @@ generateLocusZoomPlot <- function(
     temp_df$end <- c(temp_df$start[2:nrow(temp_df)] - 1L,
                      temp_df$start[nrow(temp_df)] + 1)
     temp_df <- temp_df[, c("chrom", "start", "end", "score")]
+
+
     return(temp_df)
   })
   names(plot_data_list) <- founder_strains
@@ -311,15 +297,13 @@ generateLocusZoomPlot <- function(
   max_allele_effect <- max(abs(unlist(lapply(plot_data_list, function(x) x$score))))
   max_allele_effect <- round(max_allele_effect * 1.1, digits = 2)
 
-  strain_colors <- rep(
-    c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666"),
-    length.out = num_strains
-  )
+  # Use predefined strain colors
+  strain_colors <- rep(STRAIN_COLORS, length.out = num_strains)
 
   # Plot first strain with axes
   signal_y_pos <- plot_params$plot_y + plot_params$plot_height + 0.2
-
-  plotgardener::plotSignal(
+  signalPlots <- c()
+signalPlots[[1]] <- plotgardener::plotSignal(
     data = plot_data_list[[1]],
     params = params_genome,
     range = c(-max_allele_effect, max_allele_effect),
@@ -336,8 +320,7 @@ generateLocusZoomPlot <- function(
   )
 
   plotgardener::annoYaxis(
-    plot = list(x = plot_params$x, y = signal_y_pos, width = plot_params$plot_width,
-                height = plot_params$plot_height, just = c("center", "top")),
+    plot =   signalPlots[[1]],
     at = c(-max_allele_effect, 0, max_allele_effect),
     axisLine = TRUE,
     fontsize = 8,
@@ -346,7 +329,7 @@ generateLocusZoomPlot <- function(
 
   # Plot remaining strains
   for (strain_idx in 2:8) {
-    plotgardener::plotSignal(
+    signalPlots[[strain_idx]] <- plotgardener::plotSignal(
       data = plot_data_list[[strain_idx]],
       params = params_genome,
       range = c(-max_allele_effect, max_allele_effect),
@@ -375,18 +358,30 @@ generateLocusZoomPlot <- function(
   )
 
   # --- Plot overlapping loci ranges ---
-  if (nrow(overlapping_loci) > 0) {
-    ranges_y_pos <- signal_y_pos + plot_params$plot_height + 0.2
-    nColors <- length(unique(overlapping_loci$traitXdrug))
+  # Get unique loci and assign colors
+  unique_loci <- unique(overlapping_loci$traitXdrug)
+  n_loci <- length(unique_loci)
+  loci_color_map <- LOCI_COLORS[1:min(n_loci, length(LOCI_COLORS))]
+
+  # Set ranges_y_pos for both single and multiple loci cases
+  ranges_y_pos <- signal_y_pos + plot_params$plot_height + 0.2
+
+  if (nrow(overlapping_loci) > 1) {
+
+    # Create color palette function for plotRanges
+    loci_palette <- function(n) {
+      if (n <= length(LOCI_COLORS)) {
+        return(LOCI_COLORS[1:n])
+      } else {
+        return(grDevices::colorRampPalette(LOCI_COLORS)(n))
+      }
+    }
 
     plotgardener::plotRanges(
       data = overlapping_loci,
       params = params_genome,
       order = "random",
-      fill = plotgardener::colorby("traitXdrug",
-                                   palette = grDevices::colorRampPalette(
-                                     RColorBrewer::brewer.pal(min(nColors, 9), name = "Set3")
-                                   )),
+      fill = plotgardener::colorby("traitXdrug", palette = loci_palette),
       x = plot_params$x,
       y = ranges_y_pos,
       width = plot_params$plot_width,
@@ -404,34 +399,52 @@ generateLocusZoomPlot <- function(
       just = "center",
       default.units = "in"
     )
+  }
 
+  # --- Plot genes ---
+  # Set gene position based on whether we plotted overlapping loci
+  if (nrow(overlapping_loci) > 1) {
     genes_y_pos <- ranges_y_pos + plot_params$plot_height + 0.2
   } else {
     genes_y_pos <- signal_y_pos + plot_params$plot_height + 0.2
   }
 
-  # --- Plot genes ---
-  gene_plot <- plotgardener::plotGenes(
-    params = params_genome,
-    x = plot_params$x,
-    y = genes_y_pos,
-    width = plot_params$plot_width,
-    height = 1,
-    just = c("center", "top"),
-    default.units = "inches",
-    geneOrder = if (nrow(top_genes_in_locus) > 0 && !any(is.na(top_genes_in_locus$gene))) {
-      top_genes_in_locus$gene
-    } else {
-      NULL
-    },
-    fontsize = 6,
-    geneHighlights = if (nrow(top_genes_in_locus) > 0 && !any(is.na(top_genes_in_locus$gene))) {
-      top_genes_in_locus$gene
-    } else {
-      NULL
-    },
-    geneBackground = "#fdbb84"
-  )
+  # Extract gene names for geneOrder (needs character vector)
+  gene_order <- if(nrow(top_genes_in_locus) > 0) {
+    top_genes_in_locus$gene
+  } else {
+    NULL
+  }
+
+  # Try to plot genes, but handle errors gracefully
+  gene_plot <- tryCatch({
+    plotgardener::plotGenes(
+      params = params_genome,
+      x = plot_params$x,
+      y = genes_y_pos,
+      width = plot_params$plot_width,
+      height = 1,
+      just = c("center", "top"),
+      default.units = "inches",
+      geneOrder = gene_order,
+      fontsize = 6,
+      geneHighlights = top_genes_in_locus,
+      geneBackground = GENE_BACKGROUND_COLOR
+    )
+  }, error = function(e) {
+    # If gene highlighting fails, try without it
+    message("Note: Gene highlighting failed, plotting without highlights")
+    plotgardener::plotGenes(
+      params = params_genome,
+      x = plot_params$x,
+      y = genes_y_pos,
+      width = plot_params$plot_width,
+      height = 1,
+      just = c("center", "top"),
+      default.units = "inches",
+      fontsize = 6
+    )
+  })
 
   # --- Add genome label ---
   plotgardener::annoGenomeLabel(
@@ -464,8 +477,8 @@ generateLocusZoomPlot <- function(
   # Overlapping loci legend (if present)
   if (nrow(overlapping_loci) > 0) {
     plotgardener::plotLegend(
-      legend = unique(overlapping_loci$traitXdrug),
-      fill = RColorBrewer::brewer.pal(min(nColors, 9), name = "Set3"),
+      legend = unique_loci,
+      fill = loci_color_map,
       border = FALSE,
       x = 8.7,
       y = ranges_y_pos,
@@ -481,7 +494,7 @@ generateLocusZoomPlot <- function(
   # Top genes legend
   plotgardener::plotLegend(
     legend = c("Protein coding, human orthologue, and >5 CPM in NRVMs"),
-    fill = "darkred",
+    fill = GENE_HIGHLIGHT_COLOR,
     border = FALSE,
     x = 0.25,
     y = genes_y_pos - 0.1,

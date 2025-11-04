@@ -18,11 +18,18 @@ Each packet consolidates:
 Requires R >= 4.3.0
 
 ```r
-# Install from GitHub
+# Install BiocManager if needed (for plotgardener dependency)
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# Install from GitHub with all dependencies
+BiocManager::install("RauLabUNC/genePackRat")
+
+# Or using devtools
 devtools::install_github("RauLabUNC/genePackRat")
 ```
 
-Dependencies (data.table, dplyr, openxlsx, tidyr, plotgardener, RColorBrewer) install automatically.
+Core dependencies install automatically: data.table, dplyr, openxlsx, tidyr, plotgardener (from Bioconductor), and RColorBrewer.
 
 ## Basic Usage
 
@@ -62,11 +69,11 @@ results/locus_packets/locus_chr1_100-110Mb/
 - README summary with cardiac associations
 - Founder SNP table (optional)
 
-**`generateLocusZoomPlot()`** - Multi-panel visualization
-- LOD scores with significance threshold
-- Founder allele effects (8 strains)
-- Overlapping QTL regions
-- Gene track with highlighted candidates
+**`generateLocusZoomPlot()`** - Creates multi-panel QTL visualization
+- Manhattan plot with LOD scores and significance thresholds
+- Founder allele effects for 8 CC strains with preset colors
+- Overlapping QTL display for up to 8 loci
+- Gene annotations (works without TxDb/org.Mm packages)
 
 **`generateGeneInfoExcel()`** - 3-sheet workbook
 - Sheet 1: AllGenesInCluster (main summary)
@@ -75,7 +82,9 @@ results/locus_packets/locus_chr1_100-110Mb/
 
 ## Required Data Structure
 
-The package expects CSV files in a standard structure:
+Test data is included in `tests/testthat/fixtures/` for development.
+
+Production data expects CSV files in this structure:
 
 ```
 data/

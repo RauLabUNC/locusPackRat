@@ -25,6 +25,7 @@ Imports:
     plotgardener,
     RColorBrewer
 Suggests:
+    BiocManager,
     GenomicRanges,
     GenomeInfoDb,
     BiocGenerics,
@@ -39,3 +40,4 @@ RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 URL: https://github.com/RauLabUNC/genePackRat
 BugReports: https://github.com/RauLabUNC/genePackRat/issues
+biocViews: Visualization, QualityControl, GeneExpression
