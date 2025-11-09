@@ -1,0 +1,357 @@
+---
+title: "locusPackRat: Project-Based Genomic Analysis Workflow"
+author: "Brian Gural, Todd Kimball, Anh Luu, Christoph D. Rau"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{locusPackRat Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+## Introduction
+
+The `locusPackRat` package provides a project-based workflow for genomic analyses with persistent data storage and integrated visualization. Instead of repeatedly passing data between functions, you create persistent projects that store genes or genomic regions along with any supplementary data.
+
+This vignette demonstrates the complete workflow using real genomic data from chromosome 5.
+
+## Installation
+
+```{r install, eval=FALSE}
+# Install from GitHub
+devtools::install_github("RauLabUNC/locusPackRat")
+```
+
+## Load Required Libraries
+
+```{r libraries}
+library(locusPackRat)
+library(data.table)
+library(jsonlite)
+```
+
+## Complete Workflow Example
+
+This example demonstrates the full workflow using real genomic coordinates from chromosome 5.
+
+### Step 1: Load and Prepare Genomic Data
+
+First, we'll load real genomic coordinates and subset to chromosome 5 for this demonstration:
+
+```{r load_data}
+# Load test data (included with package)
+mouse_coords <- fread(system.file("extdata", "mouse_coords_mm39.csv",
+                                  package = "locusPackRat"))
+human_coords <- fread(system.file("extdata", "human_coords_hg38.csv",
+                                  package = "locusPackRat"))
+
+# Subset to chromosome 5
+chr5_coords <- mouse_coords[chr == "5"]
+cat("Found", nrow(chr5_coords), "genes on chromosome 5\n")
+
+# Create primary gene data from real coordinates
+primary_genes <- data.table(
+  gene_symbol = chr5_coords$gene_symbol,
+  ensembl_id = chr5_coords$ensembl_id,
+  chr = chr5_coords$chr,
+  start = chr5_coords$start,
+  end = chr5_coords$end
+)
+
+# Save gene symbols before they get modified by initPackRat
+gene_symbols <- chr5_coords$gene_symbol
+n_genes <- nrow(primary_genes)
+```
+
+### Step 2: Initialize a locusPackRat Project
+
+Create a new project directory structure with your genomic data:
+
+```{r init_project}
+# Initialize project with chromosome 5 genes
+initPackRat(
+  data = primary_genes,
+  mode = "gene",
+  species = "mouse",
+  genome = "mm39",
+  project_dir = "chr5_analysis",
+  force = TRUE
+)
+```
+
+This creates a `.locusPackRat` directory with:
+- `input/genes.csv` - Your input genes with coordinates
+- `input/orthology.csv` - Cross-species orthology information
+- `config.json` - Project configuration
+- `supplementary/` - Directory for additional data tables
+
+### Step 3: Add Supplementary Data Tables
+
+Now we can add various types of supplementary data to our project:
+
+#### Expression Data
+
+```{r add_expression}
+# Create expression data (using simulated values for demonstration)
+set.seed(12)
+expression_data <- data.table(
+  gene_symbol = gene_symbols,
+  brain = round(abs(rnorm(n_genes, 100, 50)), 1),
+  liver = round(abs(rnorm(n_genes, 80, 40)), 1),
+  heart = round(abs(rnorm(n_genes, 90, 45)), 1),
+  kidney = round(abs(rnorm(n_genes, 70, 35)), 1)
+)
+expression_data[, high_expression := pmax(brain, liver, heart, kidney, na.rm = TRUE) > 120]
+
+# Add to project
+addRatTable(
+  data = expression_data,
+  table_name = "expression",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  project_dir = "chr5_analysis"
+)
+```
+
+#### Phenotype Data
+
+```{r add_phenotypes}
+# Create phenotype associations
+phenotype_data <- data.table(
+  gene_symbol = sample(gene_symbols, min(60, n_genes)),
+  phenotype = sample(c("lethal", "abnormal behavior", "metabolic", "immune", "growth"),
+                    min(60, n_genes), replace = TRUE),
+  p_value = 10^(-runif(min(60, n_genes), 0.5, 8)),
+  effect_size = round(rnorm(min(60, n_genes), 0, 1), 2)
+)
+phenotype_data[, significant := p_value < 0.05]
+
+addRatTable(
+  data = phenotype_data,
+  table_name = "phenotypes",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  project_dir = "chr5_analysis"
+)
+```
+
+#### QTL Statistics
+
+```{r add_qtl}
+# Add QTL mapping results
+qtl_stats <- data.table(
+  gene_symbol = gene_symbols,
+  lod_score = round(runif(n_genes, 0, 12), 2),
+  p_value = 10^(-runif(n_genes, 0.5, 8)),
+  fold_change = round(rnorm(n_genes, mean = 0, sd = 2), 2)
+)
+qtl_stats[, significant := p_value < 0.05]
+
+addRatTable(
+  data = qtl_stats,
+  table_name = "qtl_statistics",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  project_dir = "chr5_analysis"
+)
+```
+
+#### Human Orthology
+
+```{r add_orthology}
+# Load orthology mapping
+orthology_map <- fread(system.file("extdata", "orthology_mapping.csv",
+                                   package = "locusPackRat"))
+
+# Get matching orthologs for our chr5 genes
+ortho_matches <- orthology_map[mouse_gene_symbol %in% gene_symbols]
+
+if (nrow(ortho_matches) > 0) {
+  # Join with human coordinates
+  ortho_data <- merge(ortho_matches, human_coords,
+                      by.x = "human_gene_symbol", by.y = "gene_symbol",
+                      all.x = TRUE)
+  # Prepare orthology table
+  ortho_data <- ortho_data[, .(
+    gene_symbol = mouse_gene_symbol,
+    human_gene_symbol = human_gene_symbol,
+    human_ensembl_id = ensembl_id,
+    human_chr = chr,
+    human_start = start,
+    human_end = end
+  )]
+
+  addRatTable(
+    data = ortho_data,
+    table_name = "human_orthology",
+    link_type = "gene",
+    link_by = "gene_symbol",
+    project_dir = "chr5_analysis"
+  )
+}
+```
+
+### Step 4: List Available Tables
+
+You can check what supplementary tables are available in your project:
+
+```{r list_tables}
+tables <- listPackRatTables("chr5_analysis")
+cat("Available supplementary tables:\n")
+for (table in tables) {
+  cat("  •", table, "\n")
+}
+```
+
+### Step 5: Generate Output Files
+
+Now we can generate various output files that automatically integrate all our data:
+
+#### Simple CSV Output
+
+```{r generate_csv, eval=FALSE}
+generateGeneSheet(
+  format = "csv",
+  output_file = "chr5_complete.csv",
+  include_supplementary = TRUE,
+  project_dir = "chr5_analysis"
+)
+```
+
+#### Filtered Output
+
+```{r generate_filtered, eval=FALSE}
+# Only significant QTL hits
+generateGeneSheet(
+  format = "csv",
+  output_file = "chr5_significant.csv",
+  filter_expr = "p_value < 0.05 & lod_score > 5",
+  include_supplementary = TRUE,
+  project_dir = "chr5_analysis"
+)
+```
+
+#### Multi-Tab Excel with Conditional Formatting
+
+```{r generate_excel}
+# Pick some genes to highlight
+genes_to_highlight <- head(gene_symbols[!is.na(gene_symbols)], 5)
+cat("Highlighting:", paste(genes_to_highlight, collapse = ", "), "\n")
+
+generateGeneSheet(
+  format = "excel",
+  output_file = "chr5_analysis_multisheet.xlsx",
+  split_by = "criteria",
+  split_criteria = list(
+    "All_Chr5" = "TRUE",
+    "High_LOD" = "lod_score > 7",
+    "Significant_QTL" = "!is.na(lod_score) & p_value < 0.05",
+    "High_Expression" = "high_expression == TRUE",
+    "With_Phenotype" = "!is.na(phenotype)",
+    "Human_Ortholog" = "!is.na(human_gene_symbol)"
+  ),
+  highlight_genes = genes_to_highlight,
+  include_supplementary = TRUE,
+  project_dir = "chr5_analysis"
+)
+```
+
+This creates an Excel workbook with:
+- Multiple tabs based on filtering criteria
+- Yellow highlighting for specified genes
+- Auto-sized columns
+- Frozen header rows
+- Professional formatting
+
+#### Selective Table Inclusion
+
+```{r generate_selective, eval=FALSE}
+# Include only specific supplementary tables
+generateGeneSheet(
+  format = "excel",
+  output_file = "chr5_qtl_expression.xlsx",
+  include_supplementary = c("qtl_statistics", "expression"),
+  project_dir = "chr5_analysis"
+)
+```
+
+## Working with Region-Based Projects
+
+The package also supports genomic region-based projects (e.g., QTL intervals):
+
+```{r region_project, eval=FALSE}
+# Define QTL regions
+qtl_regions <- data.table(
+  chr = c(5, 10, 12),
+  start = c(10000000, 50000000, 75000000),
+  end = c(15000000, 55000000, 80000000),
+  trait = c("body_weight", "glucose", "cholesterol"),
+  lod = c(8.5, 6.2, 7.8)
+)
+
+# Initialize region-based project
+initPackRat(
+  data = qtl_regions,
+  mode = "region",
+  species = "mouse",
+  genome = "mm39",
+  project_dir = "qtl_regions",
+  force = TRUE
+)
+
+# Add scan data
+scan_data <- data.table(
+  chr = rep(5, 100),
+  pos = seq(10000000, 15000000, length.out = 100),
+  lod = rnorm(100, mean = 5, sd = 2) +
+        ifelse(seq(10000000, 15000000, length.out = 100) > 12000000 &
+               seq(10000000, 15000000, length.out = 100) < 13000000, 3, 0)
+)
+
+addRatTable(
+  data = scan_data,
+  table_name = "qtl_scans",
+  link_type = "region",
+  project_dir = "qtl_regions"
+)
+```
+
+## Generating LocusZoom Plots
+
+For region-based projects, you can generate LocusZoom-style visualizations:
+
+```{r locuszoom, eval=FALSE}
+generateLocusZoomPlot_v2(
+  region_id = 1,  # First region
+  scan_table = "qtl_scans",
+  highlight_genes = c("Gene1", "Gene2"),
+  output_file = "chr5_locuszoom.pdf",
+  project_dir = "qtl_regions"
+)
+```
+
+## Key Benefits of the locusPackRat Workflow
+
+1. **Persistent Storage**: Load data once, use many times
+2. **Flexible Integration**: Add any type of supplementary data
+3. **Reproducible Outputs**: Generate different outputs with different parameters
+4. **Multi-Species Support**: Built-in orthology mapping
+5. **Excel Integration**: Professional multi-sheet workbooks with conditional formatting
+6. **Project Organization**: All related data in one place
+
+## Session Information
+
+```{r session}
+sessionInfo()
+```
