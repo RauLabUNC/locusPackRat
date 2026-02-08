@@ -2,31 +2,82 @@
 % Please edit documentation in R/queryFunctions.R
 \name{queryOpenTargets}
 \alias{queryOpenTargets}
-\title{Query Open Targets Genetics}
+\title{Query Open Targets Platform}
 \usage{
-queryOpenTargets(project_dir = ".", limit = NULL, chunk_size = 50)
+queryOpenTargets(
+  project_dir = ".",
+  data_types = c("diseases", "constraints", "tractability"),
+  disease_limit = 500,
+  limit = NULL,
+  chunk_size = 50,
+  verbose = TRUE,
+  max_retries = 3
+)
 }
 \arguments{
 \item{project_dir}{Character path to the project directory}
 
+\item{data_types}{Character vector specifying which data types to retrieve.
+Available options: \code{"diseases"}, \code{"constraints"}, \code{"tractability"},
+\code{"expression"}, \code{"mouse_phenotypes"}, \code{"homologues"},
+\code{"interactions"}, \code{"known_drugs"}, \code{"depmap"}, \code{"pharmacogenomics"}.
+Default retrieves diseases, constraints, and tractability for backward compatibility.}
+
+\item{disease_limit}{Integer. Maximum number of disease associations per gene.
+Default 500. Set to NULL for no limit.}
+
 \item{limit}{Integer (optional). Limit query to first N genes for testing.}
 
 \item{chunk_size}{Integer. Number of genes per API call (default 50).}
+
+\item{verbose}{Logical. Print progress messages. Default TRUE.}
+
+\item{max_retries}{Integer. Maximum retry attempts for failed requests. Default 3.}
 }
 \value{
-Invisible TRUE on success
+Invisible list of data.tables for each requested data type
 }
 \description{
-Fetches disease associations, genetic constraints, and drug tractability
-information from the Open Targets GraphQL API.
+Fetches comprehensive gene annotation data from the Open Targets GraphQL API
+including disease associations, genetic constraints, drug tractability, expression
+profiles, protein interactions, and more.
+}
+\details{
+The function queries the Open Targets Platform API for comprehensive gene annotations.
+For mouse projects, genes are first mapped to human orthologs before querying.
+
+**Output tables by data type:**
+\itemize{
+  \item \code{diseases} -> \code{ot_diseases} (otd): Disease associations with scores
+  \item \code{constraints} -> \code{ot_constraints} (otc): GnomAD genetic constraint metrics
+  \item \code{tractability} -> \code{ot_tractability} (ott): Drug tractability assessments
+  \item \code{expression} -> \code{ot_expression} (ote): RNA/protein expression by tissue
+  \item \code{mouse_phenotypes} -> \code{ot_mouse_phenotypes} (otmp): Mouse phenotypes from OT
+  \item \code{homologues} -> \code{ot_homologues} (oth): Cross-species orthologs
+  \item \code{interactions} -> \code{ot_interactions} (oti): Protein-protein interactions
+  \item \code{known_drugs} -> \code{ot_known_drugs} (otkd): Clinical drug precedence
+  \item \code{depmap} -> \code{ot_depmap} (otdm): DepMap CRISPR essentiality data
+  \item \code{pharmacogenomics} -> \code{ot_pharmacogenomics} (otpg): Drug response variants
+}
 }
 \examples{
 \dontrun{
-# Query Open Targets for all genes in project
+# Query Open Targets for all genes in project (default: diseases, constraints, tractability)
 queryOpenTargets(project_dir = "my_analysis")
 
-# Test with limited genes
-queryOpenTargets(project_dir = "my_analysis", limit = 5)
+# Query with additional data types
+queryOpenTargets(project_dir = "my_analysis",
+                 data_types = c("diseases", "expression", "interactions"))
+
+# Query all available data types
+queryOpenTargets(project_dir = "my_analysis",
+                 data_types = c("diseases", "constraints", "tractability",
+                                "expression", "mouse_phenotypes", "homologues",
+                                "interactions", "known_drugs", "depmap",
+                                "pharmacogenomics"))
+
+# Test with limited genes and more disease associations
+queryOpenTargets(project_dir = "my_analysis", limit = 5, disease_limit = 1000)
 }
 
 }

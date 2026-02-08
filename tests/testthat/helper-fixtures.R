@@ -13,11 +13,20 @@ test_dir <- file.path(tempdir(), paste0("test_project_", format(Sys.time(), "%Y%
   dir.create(test_dir, showWarnings = FALSE)
 
   if (mode == "gene") {
-    test_data <- data.frame(
-      gene_symbol = c("Myc", "Tp53", "Egfr", "Vegfa", "Gapdh"),
-      log2FC = c(1.5, -2.1, 0.8, 1.2, -0.3),
-      padj = c(0.001, 0.01, 0.05, 0.1, 0.5)
-    )
+    # Use appropriate gene symbols for the species
+    if (species == "human") {
+      test_data <- data.frame(
+        gene_symbol = c("MYC", "TP53", "EGFR", "VEGFA", "GAPDH"),
+        log2FC = c(1.5, -2.1, 0.8, 1.2, -0.3),
+        padj = c(0.001, 0.01, 0.05, 0.1, 0.5)
+      )
+    } else {
+      test_data <- data.frame(
+        gene_symbol = c("Myc", "Tp53", "Egfr", "Vegfa", "Gapdh"),
+        log2FC = c(1.5, -2.1, 0.8, 1.2, -0.3),
+        padj = c(0.001, 0.01, 0.05, 0.1, 0.5)
+      )
+    }
   } else {
     test_data <- data.frame(
       chr = c("1", "3", "5"),

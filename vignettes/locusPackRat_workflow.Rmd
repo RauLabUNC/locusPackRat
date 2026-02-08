@@ -659,7 +659,7 @@ listPackRatTables("atacseq_analysis", full_info = FALSE)
 
 ```{r remove_table}
 
-removeRatTable("ot_diseases",project_dir = "atacseq_analysis")
+removeRatTable("chromatin_states", project_dir = "atacseq_analysis")
 
 ```
 
