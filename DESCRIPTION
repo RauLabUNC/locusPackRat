@@ -39,7 +39,8 @@ Suggests:
     devtools,
     usethis,
     TxDb.Mmusculus.UCSC.mm39.knownGene,
-    org.Mm.eg.db
+    org.Mm.eg.db,
+    liftOver
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 URL: https://github.com/RauLabUNC/locusPackRat

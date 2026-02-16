@@ -553,11 +553,12 @@ makeGeneSheet(
 )
 ```
 
-# Cross-Species Analysis
+# Working Across Species and Genome Builds
+
+## Human Gene Analysis with Mouse Orthologs
 
 The package automatically handles orthology mapping between human and mouse using the built-in coordinate files.
 
-## Human Gene Analysis with Mouse Orthologs
 
 ```{r crossspecies_analysis}
 # Define human cancer genes
@@ -617,6 +618,32 @@ makeGeneSheet(
   project_dir = "cancer_genes"
 )
 ```
+
+## Converting Between Genome Coordinates
+
+In some cases, users may have data that use older genome builds (e.g. mm9) and wish to incorporate them into a project based around a newer build (e.g. mm39).
+
+Although LocusPackRat does not have a built-in function to accomodate other builds, the liftOver package, paired with chain files drawn from the UCSC genome browser, can easily do these conversions.
+
+```{r liftOver, message=F}
+library(liftOver)
+mm9_ncRNA = read.csv(system.file("extdata", "sample_mm9_ncRNA.csv", package = "locusPackRat"))
+chain = import.chain( system.file("extdata", "mm9ToMm39.over.chain", package = "locusPackRat"))
+
+#convert table to GRanges object.  Note that the chain files normally want
+#chromosomes in 'chr1' format vs '1' format.  So you will need to convert.
+mm9_ncRNA$chr=paste0("chr",mm9_ncRNA$chr)
+mm9_ncRNA=makeGRangesFromDataFrame(mm9_ncRNA,keep.extra.columns = T)
+
+mm39_ncRNA=unlist(liftOver(mm9_ncRNA,chain = chain))
+mm39_ncRNA=as.data.frame(mm39_ncRNA)
+mm39_ncRNA$seqnames=gsub("chr","",mm39_ncRNA$seqnames)
+
+#Your data are now ready to be added to a locusPackRat project
+
+
+```
+
 
 # Working with Projects
 
