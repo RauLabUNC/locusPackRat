@@ -50,6 +50,17 @@ The package includes complete genome-wide coordinate files generated from Ensemb
 - `human_coords_hg38.csv`: ~30,000 human genes (GRCh38)
 - `human_coords_hg19.csv`: ~24,000 human genes (GRCh19)
 
+## Data Sources Used in This Vignette
+
+Throughout this vignette, we draw on the following data types:
+
+- **Gene coordinates and orthology**: Built-in Ensembl Biomart coordinate files and human-mouse orthology tables
+- **MouseMine phenotype annotations**: Gene-phenotype associations from the Mouse Genome Informatics (MGI) database, queried via `queryMouseMine()`
+- **Open Targets disease associations**: Human gene-disease links, genetic constraints (gnomAD), and drug tractability data, queried via `queryOpenTargets()`
+- **Study-specific data**: User-supplied tables (e.g., differential expression, eQTL, mutations) added via `addRatTable()`
+
+For molecular QTL data from Open Targets (eQTL, pQTL, sQTL), see the `region_qtl_opentargets` vignette. For model organism QTL data from GeneNetwork2, see the `genenetwork_qtl` vignette.
+
 # Installation
 
 ```{r install, eval=FALSE}
@@ -73,9 +84,11 @@ library(jsonlite)
 
 # Gene Mode Analysis
 
-Gene mode is designed for analyzing gene lists from RNA-seq or other gene-centric studies.  See below for Region Mode, designed for analysis of a chromosome region
+Gene mode is designed for analyzing gene lists from RNA-seq or other gene-centric studies. In this mode, you provide a data.frame with a `gene_symbol` column and any additional columns of per-gene data (e.g., log2 fold changes, p-values). `initPackRat()` maps these gene symbols to genomic coordinates and creates the project directory structure. See below for Region Mode, designed for analysis of a chromosome region.
 
 ## Initialize Project with Gene List
+
+The first step is to call `initPackRat()` with your gene data. The `mode = "gene"` argument tells the function to expect a gene list rather than genomic intervals. The `species` and `genome` arguments determine which built-in coordinate file is used for mapping. **Important**: all data added to the project later must use the same genome build.
 
 ```{r gene_mode_init}
 # Prepare example RNA-seq differential expression results
@@ -105,7 +118,11 @@ initPackRat(
 
 ## Add Supplementary Data
 
+Supplementary data tables are added to the project using `addRatTable()`. Each table must contain a column that can be linked to the gene list — either `gene_symbol`, `ensembl_gene_id`, or genomic coordinates (`chr`, `start`, `end`). The `link_type` parameter specifies how the data connects to the project genes, and `link_by` identifies the linking column(s).
+
 ### Tissue Expression Atlas
+
+Tissue expression data helps identify whether candidate genes are expressed in disease-relevant tissues. Here we simulate TPM values across six tissues and calculate tissue specificity metrics.
 
 ```{r add_tissue_expression}
 # Load processed genes with coordinates
@@ -140,6 +157,8 @@ addRatTable(
 
 ### Pathway Annotations
 
+Pathway membership data provides functional context for candidate genes. Note that `addRatTable()` accepts any data.frame — the only requirement is that it contain a column matching `link_by` that can be joined to the project gene list.
+
 ```{r add_pathways}
 # Add pathway membership data
 pathways <- c("Cell cycle", "Apoptosis", "Immune response", "Metabolism",
@@ -163,9 +182,11 @@ addRatTable(
 
 ### Add mouseMine and Open Targets data
 
+`queryMouseMine()` retrieves gene-phenotype associations from the Mouse Genome Informatics database, and `queryOpenTargets()` retrieves human disease associations, genetic constraint scores (gnomAD), and drug tractability data. Both functions query their respective APIs and automatically store results as supplementary tables in the project. For mouse projects, genes are mapped to human orthologs before querying Open Targets.
+
 ```{r add_mouseMine_and_Open_Targets_data_gene}
 queryMouseMine(project_dir = "rnaseq_analysis")
-queryOpenTargets(project_dir = "rnaseq_analysis") 
+queryOpenTargets(project_dir = "rnaseq_analysis")
 ```
 
 ## Examine Package Structure Before Creating Outputs
@@ -176,6 +197,8 @@ listPackRatTables(project_dir = "rnaseq_analysis", full_info = TRUE)
 ```
 
 ## Generate Multi-Sheet Excel Workbook
+
+`makeGeneSheet()` merges all supplementary tables with the gene list and generates output workbooks. The `split_criteria` parameter accepts a named list of R expressions that define filtered subsets — each becomes a separate sheet in the Excel workbook. This is the key customization point: you can combine any columns from any attached table in your filter expressions.
 
 Additional sheets can be created from any boolean (True/False) argument.
 Boolean statements in R can be strung together with & (and) or | (or).
@@ -210,10 +233,9 @@ makeGeneSheet(
 
 # Region Mode Analysis
 
-Region mode is designed for analyzing genomic intervals from ATAC-seq, ChIP-seq, or QTL mapping.
+Region mode is designed for analyzing genomic intervals from ATAC-seq, ChIP-seq, or QTL mapping. In this mode, you provide a data.frame with `chr`, `start`, and `end` columns defining the genomic intervals. `initPackRat()` identifies all genes overlapping these regions using the built-in coordinate files and creates the project structure.
 
-
-We include two versions of Region Mode Analysis:  The first for QTL mapping, the second for ATAC-seq data.
+We include two versions of Region Mode Analysis: The first for QTL mapping, the second for ATAC-seq data.
 
 ## QTL Project
 ### Initialize Project with Genomic Regions
@@ -704,6 +726,66 @@ makeGeneSheet(
   output_file = "selected_data.xlsx",
   include_supplementary = c("tissue_expression", "pathway_annotations"),
   project_dir = "rnaseq_analysis"
+)
+```
+
+# Converting Genome Builds
+
+All data added to a locusPackRat project must use the same genome build (e.g., mm39, hg38). If you have data in a different build, use `rtracklayer::liftOver()` to convert coordinates before adding them to the project.
+
+```{r liftover_example, eval=FALSE}
+# Example: Convert mm10 coordinates to mm39
+library(rtracklayer)
+library(GenomicRanges)
+
+# Load a chain file for the conversion
+# Chain files are available from UCSC:
+# https://hgdownload.cse.ucsc.edu/goldenpath/mm10/liftOver/mm10ToMm39.over.chain.gz
+chain <- import.chain("mm10ToMm39.over.chain")
+
+# Create a GRanges object from your data
+# Suppose you have eQTL data in mm10 coordinates
+eqtl_mm10 <- data.table(
+  chr = c("chr3", "chr3", "chr3"),
+  start = c(131000000, 135000000, 142000000),
+  end = c(131001000, 135001000, 142001000),
+  gene = c("Cisd2", "Manba", "Pdlim5"),
+  lod = c(5.2, 4.8, 3.1)
+)
+
+gr_mm10 <- GRanges(
+  seqnames = eqtl_mm10$chr,
+  ranges = IRanges(start = eqtl_mm10$start, end = eqtl_mm10$end),
+  gene = eqtl_mm10$gene,
+  lod = eqtl_mm10$lod
+)
+
+# Perform liftOver
+gr_mm39 <- liftOver(gr_mm10, chain)
+
+# Convert back to data.table — liftOver returns a GRangesList
+# (one element per input range, since some ranges may map to multiple locations)
+gr_mm39_unlisted <- unlist(gr_mm39)
+
+eqtl_mm39 <- data.table(
+  chr = as.character(seqnames(gr_mm39_unlisted)),
+  start = start(gr_mm39_unlisted),
+  end = end(gr_mm39_unlisted),
+  gene = gr_mm39_unlisted$gene,
+  lod = gr_mm39_unlisted$lod
+)
+
+# Remove "chr" prefix if your project uses UCSC-style names without it
+eqtl_mm39[, chr := gsub("^chr", "", chr)]
+
+# Now add to your mm39 locusPackRat project
+addRatTable(
+  data = eqtl_mm39,
+  table_name = "eqtl_lifted",
+  abbreviation = "eql",
+  link_type = "region",
+  link_by = "chr,start,end",
+  project_dir = "qtl_analysis"
 )
 ```
 

@@ -1,0 +1,45 @@
+{
+  "env": {
+    "includeCoAuthoredBy": "false"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(git -C /proj/raulab/users/brian/packrat log --all --oneline)",
+      "Bash(paste:*)",
+      "Bash(awk:*)",
+      "Bash(sort:*)",
+      "Bash(read:/proj/raulab/users/brian/packrat/*)",
+      "Bash(git fetch:*)",
+      "Bash(grep:*)",
+      "Bash(echo:*)",
+      "Bash(env)",
+      "Bash(gh run list:*)",
+      "Bash(unzip:*)",
+      "Bash(git branch:*)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(git -C /proj/raulab/users/brian/packrat log --oneline -5)",
+      "Bash(git -C /proj/raulab/users/brian/packrat show --name-status 9feb78f)",
+      "Bash(git -C /proj/raulab/users/brian/packrat status)",
+      "Bash(git -C /proj/raulab/users/brian/packrat log --oneline origin/main..HEAD)",
+      "Bash(source:*)",
+      "Bash(mamba activate:*)",
+      "Bash(Rscript:*)",
+      "Bash(git -C /proj/raulab/users/brian/packrat diff --stat)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(conda activate:*)",
+      "Bash(conda info:*)",
+      "Bash(R CMD check:*)",
+      "Bash(R --vanilla -e:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "Bash(module avail:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -73,6 +73,10 @@ initPackRat <- function(data,
   }
 
   message("Initializing locusPackRat project...")
+  message(sprintf("Note: All data added to this project must use the %s genome build. ",
+                  genome),
+          "Mixing genome builds will cause incorrect coordinate matching. ",
+          "Use rtracklayer::liftOver() to convert coordinates if needed.")
 
   # Create directory structure
   dirs <- c(

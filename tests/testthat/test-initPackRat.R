@@ -119,3 +119,22 @@ test_that("initPackRat stores config correctly", {
   expect_equal(config$genome, "mm39")
   expect_equal(config$n_entries, 2)
 })
+
+test_that("initPackRat emits genome build consistency message", {
+  test_dir <- file.path(tempdir(), "test_genome_msg")
+  on.exit(unlink(test_dir, recursive = TRUE))
+
+  test_data <- data.frame(gene_symbol = c("Myc", "Tp53"))
+
+  expect_message(
+    initPackRat(
+      data = test_data,
+      mode = "gene",
+      species = "mouse",
+      genome = "mm39",
+      project_dir = test_dir,
+      force = TRUE
+    ),
+    "All data added to this project must use the mm39 genome build"
+  )
+})
