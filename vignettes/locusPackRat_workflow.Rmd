@@ -7,7 +7,7 @@ output:
         toc: true
         toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{locusPackRat Workflow}
+  %\VignetteIndexEntry{locusPackRat: Project-Based Genomic Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -90,7 +90,7 @@ Gene mode is designed for analyzing gene lists from RNA-seq or other gene-centri
 
 The first step is to call `initPackRat()` with your gene data. The `mode = "gene"` argument tells the function to expect a gene list rather than genomic intervals. The `species` and `genome` arguments determine which built-in coordinate file is used for mapping. **Important**: all data added to the project later must use the same genome build.
 
-```{r gene_mode_init}
+```{r gene_mode_init, message=TRUE}
 # Prepare example RNA-seq differential expression results
 set.seed(27)
 rna_genes <- data.table(
@@ -240,7 +240,7 @@ We include two versions of Region Mode Analysis: The first for QTL mapping, the 
 ## QTL Project
 ### Initialize Project with Genomic Regions
 
-```{r region_mode_init_QTL}
+```{r region_mode_init_QTL, message=TRUE}
 #LocusPackRat includes an example QTL output with a single significant locus on chromsome 3.
 #Here we examine two regions, one significant and the other one insignificant
 
@@ -392,7 +392,7 @@ makeGeneSheet(
 
 ### Initialize Project with Genomic Regions - ATACseq
 
-```{r region_mode_init_ATAC}
+```{r region_mode_init_ATAC, message=TRUE}
 # Prepare example ATAC-seq peaks
 set.seed(123)
 chromosomes <- c(as.character(1:19), "X", "Y")
@@ -582,7 +582,7 @@ makeGeneSheet(
 The package automatically handles orthology mapping between human and mouse using the built-in coordinate files.
 
 
-```{r crossspecies_analysis}
+```{r crossspecies_analysis, message=TRUE}
 # Define human cancer genes
 cancer_genes <- c("BRCA1", "BRCA2", "TP53", "EGFR", "KRAS", "MYC",
                  "PTEN", "RB1", "VHL", "APC", "ATM", "CDKN2A",

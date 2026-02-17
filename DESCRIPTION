@@ -1,7 +1,7 @@
 Package: locusPackRat
 Type: Package
 Title: Flexible R Package for Managing Genomic Analysis Projects
-Version: 0.6.0
+Version: 0.6.1
 Authors@R: c(
     person("Brian", "Gural", email = "bgural@unc.edu", role = c("aut", "cre")),
     person("Todd", "Kimball", role = "aut"),
@@ -41,7 +41,10 @@ Suggests:
     usethis,
     TxDb.Mmusculus.UCSC.mm39.knownGene,
     org.Mm.eg.db,
-    liftOver
+    liftOver,
+    Seurat,
+    TxDb.Hsapiens.UCSC.hg38.knownGene,
+    org.Hs.eg.db
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 URL: https://github.com/RauLabUNC/locusPackRat

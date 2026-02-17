@@ -1,3 +1,49 @@
+# locusPackRat 0.6.1
+
+## Bug Fixes
+- **Known Drugs query**: Fixed invalid `mechanismsOfAction { actionType }` field in GraphQL query; now uses `mechanismOfAction` at the KnownDrug row level (matches current Open Targets API schema)
+- **Pharmacogenomics query**: Fixed `variantFunctionalConsequence` (now `SequenceOntologyTerm` object) and drug fields (now nested under `drugs: [DrugWithIdentifiers!]!`); rewrote parser for correct extraction
+- **Expression parser**: Fixed `lapply` iterating over data.frame columns instead of rows when `fromJSON` auto-simplifies; now produces ~180 tissue rows per gene instead of 3 empty rows
+- **Mouse Phenotypes parser**: Applied same data.frame-to-list-of-rows guard to prevent column iteration bug
+- **DepMap parser**: Fixed column explosion (177 wide-format columns instead of 6) by extracting only expected columns from auto-simplified data.frame
+- **QTL credible set gene linking**: Expanded `id_map` to include all ensembl IDs from QTL response (not just project genes), fixing 0/179 match issue in region mode
+
+## Improvements
+- Reduced batch size to 5 genes when querying heavy data types (mouse_phenotypes, known_drugs) to avoid API timeouts
+- Increased API timeout from 60s to 120s for Open Targets queries
+- Audit script now uses name-based file lookup instead of newest-file heuristic, includes row-count validation and locus zoom plot test
+- Vignette `genenetwork_qtl`: defensive `intersect(names(...), expected_cols)` column subsetting
+- Vignette `region_qtl_opentargets`: locus zoom chunks conditionally evaluated when Bioconductor annotation packages are available
+- Vignette `locusPackRat_workflow`: synced VignetteIndexEntry with YAML title
+
+## Package Metadata
+- Added `Seurat`, `TxDb.Hsapiens.UCSC.hg38.knownGene`, `org.Hs.eg.db` to Suggests
+- Added `chr_clean` and `study_locus_id` to `globalVariables()` (fixes R CMD check NOTEs)
+- Added `.specify` and `.locusPackRat` patterns to `.Rbuildignore`
+
+---
+
+# locusPackRat 0.6.0
+
+## New Features
+- `queryOpenTargetsQTL()`: Query eQTL, pQTL, and sQTL credible sets from the Open Targets Genetics portal, with locus-to-gene (L2G) prediction scores
+- Expanded `queryOpenTargets()` data types: now supports `diseases`, `constraints`, `tractability`, `expression`, `mouse_phenotypes`, `homologues`, `interactions`, `known_drugs`, `depmap`, and `pharmacogenomics`
+- Genome build messaging: `initPackRat()` now displays a prominent note reminding users that all data must match the project's genome build, with guidance on using `rtracklayer::liftOver()` for coordinate conversion
+
+## New Vignettes
+- `region_qtl_opentargets`: Region-level QTL analysis using Open Targets eQTL/pQTL data
+- `genenetwork_qtl`: GeneNetwork2 integration for BXD/DO/HMDP QTL studies
+- `single_cell_integration`: Single-cell RNA-seq integration via Tabula Muris and Seurat
+
+## Removed
+- Removed `ComplexUpset` dependency (replaced with base R alternatives)
+
+## Improvements
+- Added plotgardener citation to locus zoom plot output
+- `listPackRatTables(full_info = TRUE)` now reports column types, value ranges, and sample counts
+
+---
+
 # locusPackRat 0.5.0
 
 ## Breaking Changes

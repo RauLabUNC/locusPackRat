@@ -9,5 +9,6 @@ utils::globalVariables(c(
   "disease", "region_chr", "region_start", "region_end", "strand",
   "..coords_cols", "overlap_type", "overlap_types", "gene_start",
   "gene_end", "i.start", "i.end", "x.start", "x.end",
-  "rbindlist", "uniqueN", "gene"
+  "rbindlist", "uniqueN", "gene",
+  "chr_clean", "study_locus_id"
 ))

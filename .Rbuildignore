@@ -19,3 +19,5 @@
 ^format_test$
 ^doc$
 ^Meta$
+^\.specify$
+\.locusPackRat$

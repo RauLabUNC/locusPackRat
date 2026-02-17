@@ -87,7 +87,8 @@ expression_datasets <- bxd_datasets[grepl("mRNA|RNA-seq|expression",
                                           bxd_datasets$tissue, ignore.case = TRUE), ]
 
 # Preview available expression datasets
-head(expression_datasets[, c("id", "name", "tissue", "description")])
+display_cols <- intersect(names(expression_datasets), c("id", "name", "tissue", "description"))
+head(expression_datasets[, display_cols, drop = FALSE])
 ```
 
 ## Query Traits for a Specific Gene
@@ -192,7 +193,8 @@ do_datasets <- fromJSON(content(
 ))
 
 # Preview
-head(do_datasets[, c("id", "name", "tissue", "description")])
+display_cols <- intersect(names(do_datasets), c("id", "name", "tissue", "description"))
+head(do_datasets[, display_cols, drop = FALSE])
 ```
 
 ## Query DO Phenotype Traits

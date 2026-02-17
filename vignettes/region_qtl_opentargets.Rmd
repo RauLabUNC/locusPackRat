@@ -34,6 +34,11 @@ api_available <- requireNamespace("httr", quietly = TRUE) && {
 }
 
 skip_api <- on_cran || !api_available
+
+# Check for Bioconductor annotation packages needed for locus zoom plots
+has_bioc_annot <- requireNamespace("TxDb.Hsapiens.UCSC.hg38.knownGene", quietly = TRUE) &&
+                  requireNamespace("org.Hs.eg.db", quietly = TRUE)
+can_plot <- !skip_api && has_bioc_annot
 ```
 
 # Overview
@@ -53,9 +58,6 @@ We showcase the Open Targets Platform integration functions:
 ```{r libraries}
 library(locusPackRat)
 library(data.table)
-# Debugging
-library(devtools)
-devtools::load_all()
 ```
 
 # Define QTL Regions
@@ -261,7 +263,7 @@ Create publication-quality locus zoom plots for each region. These plots show th
 BiocManager::install(c("TxDb.Hsapiens.UCSC.hg38.knownGene", "org.Hs.eg.db"))
 ```
 
-```{r locus_zoom_znf586, eval=FALSE}
+```{r locus_zoom_znf586, eval=can_plot}
 # ZNF586 locus - expression QTL region
 generateLocusZoomPlot(
   region_id = "ZNF586_locus",
@@ -275,7 +277,7 @@ generateLocusZoomPlot(
 )
 ```
 
-```{r locus_zoom_apip, eval=FALSE}
+```{r locus_zoom_apip, eval=can_plot}
 # APIP locus - expression QTL region
 generateLocusZoomPlot(
   region_id = "APIP_locus",
@@ -289,7 +291,7 @@ generateLocusZoomPlot(
 )
 ```
 
-```{r locus_zoom_clec19a, eval=FALSE}
+```{r locus_zoom_clec19a, eval=can_plot}
 # CLEC19A locus - protein QTL region
 generateLocusZoomPlot(
   region_id = "CLEC19A_locus",
