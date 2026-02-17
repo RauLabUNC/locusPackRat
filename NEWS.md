@@ -2,23 +2,28 @@
 
 ## Bug Fixes
 - **Known Drugs query**: Fixed invalid `mechanismsOfAction { actionType }` field in GraphQL query; now uses `mechanismOfAction` at the KnownDrug row level (matches current Open Targets API schema)
+- **Known Drugs query**: Added `size: 500` parameter for complete results (default page size truncated output)
 - **Pharmacogenomics query**: Fixed `variantFunctionalConsequence` (now `SequenceOntologyTerm` object) and drug fields (now nested under `drugs: [DrugWithIdentifiers!]!`); rewrote parser for correct extraction
 - **Expression parser**: Fixed `lapply` iterating over data.frame columns instead of rows when `fromJSON` auto-simplifies; now produces ~180 tissue rows per gene instead of 3 empty rows
-- **Mouse Phenotypes parser**: Applied same data.frame-to-list-of-rows guard to prevent column iteration bug
+- **Mouse Phenotypes parser**: Applied same data.frame-to-list-of-rows guard to prevent column iteration bug; renamed `targetFromSourceId` to `targetInModelEnsemblId` to match current schema
 - **DepMap parser**: Fixed column explosion (177 wide-format columns instead of 6) by extracting only expected columns from auto-simplified data.frame
 - **QTL credible set gene linking**: Expanded `id_map` to include all ensembl IDs from QTL response (not just project genes), fixing 0/179 match issue in region mode
+- **Locus zoom plot path**: `output_file` now accepts only a filename; full paths are reduced to `basename()` with a warning, preventing nested `.locusPackRat/output/<path>/file.pdf` output
 
 ## Improvements
+- `generateLocusZoomPlot()` supports PNG output via file extension; locus zoom plots display inline in `region_qtl_opentargets` vignette
 - Reduced batch size to 5 genes when querying heavy data types (mouse_phenotypes, known_drugs) to avoid API timeouts
 - Increased API timeout from 60s to 120s for Open Targets queries
+- Improved parser dual-path handling: data.frame vs list-of-lists detection is now consistent across all data type parsers
 - Audit script now uses name-based file lookup instead of newest-file heuristic, includes row-count validation and locus zoom plot test
 - Vignette `genenetwork_qtl`: defensive `intersect(names(...), expected_cols)` column subsetting
 - Vignette `region_qtl_opentargets`: locus zoom chunks conditionally evaluated when Bioconductor annotation packages are available
+- Vignette `single_cell_integration`: all chunks conditionally evaluated when Seurat and ggplot2 are installed (fixes R CMD check failure on systems without Seurat)
 - Vignette `locusPackRat_workflow`: synced VignetteIndexEntry with YAML title
 
 ## Package Metadata
 - Added `Seurat`, `TxDb.Hsapiens.UCSC.hg38.knownGene`, `org.Hs.eg.db` to Suggests
-- Added `chr_clean` and `study_locus_id` to `globalVariables()` (fixes R CMD check NOTEs)
+- Added `chr_clean`, `study_locus_id`, `study_target_gene_id`, and `qtl_gene_id` to `globalVariables()` (fixes R CMD check NOTEs)
 - Added `.specify` and `.locusPackRat` patterns to `.Rbuildignore`
 
 ---

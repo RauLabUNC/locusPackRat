@@ -311,7 +311,7 @@ queryOpenTargets <- function(project_dir = ".",
         fields <- c(fields, "expressions { tissue { id label anatomicalSystems organs } rna { level value unit zscore } protein { level reliability cellType { name level reliability } } }")
       }
       if ("mouse_phenotypes" %in% types) {
-        fields <- c(fields, "mousePhenotypes { modelPhenotypeLabel modelPhenotypeId modelPhenotypeClasses { id label } targetFromSourceId targetInModel targetInModelMgiId biologicalModels { id allelicComposition geneticBackground } }")
+        fields <- c(fields, "mousePhenotypes { modelPhenotypeLabel modelPhenotypeId modelPhenotypeClasses { id label } targetInModelEnsemblId targetInModel targetInModelMgiId biologicalModels { id allelicComposition geneticBackground } }")
       }
       if ("homologues" %in% types) {
         fields <- c(fields, "homologues { speciesId speciesName homologyType queryPercentageIdentity targetPercentageIdentity targetGeneId targetGeneSymbol isHighConfidence }")
@@ -320,7 +320,7 @@ queryOpenTargets <- function(project_dir = ".",
         fields <- c(fields, "interactions { count rows { intA intABiologicalRole intB intBBiologicalRole score sourceDatabase } }")
       }
       if ("known_drugs" %in% types) {
-        fields <- c(fields, "knownDrugs { count rows { drugId drug { id name drugType maximumClinicalTrialPhase isApproved } mechanismOfAction disease { id name } phase status } }")
+        fields <- c(fields, "knownDrugs(size: 500) { count rows { drugId drug { id name drugType maximumClinicalTrialPhase isApproved } mechanismOfAction disease { id name } phase status } }")
       }
       if ("depmap" %in% types) {
         fields <- c(fields, "depMapEssentiality { screens { depmapId cellLineName diseaseFromSource mutation geneEffect expression } }")
@@ -540,35 +540,62 @@ queryOpenTargets <- function(project_dir = ".",
   if ("expression" %in% data_types &&
       !is.null(g_dat$expressions) &&
       length(g_dat$expressions) > 0) {
-    # Guard: fromJSON may auto-simplify to data.frame; convert to list-of-rows
     expr_input <- g_dat$expressions
     if (is.data.frame(expr_input)) {
-      expr_input <- lapply(seq_len(nrow(expr_input)), function(i) {
-        lapply(expr_input[i, ], function(x) if (is.list(x)) x[[1]] else x)
-      })
-    }
-    expr_list <- lapply(expr_input, function(ex) {
-      row <- data.table::data.table(
-        tissue_id = ex$tissue$id %||% NA_character_,
-        tissue_label = ex$tissue$label %||% NA_character_,
-        anatomical_systems = paste(ex$tissue$anatomicalSystems %||% "", collapse = "; "),
-        organs = paste(ex$tissue$organs %||% "", collapse = "; "),
-        rna_level = ex$rna$level %||% NA_integer_,
-        rna_value = ex$rna$value %||% NA_real_,
-        rna_unit = ex$rna$unit %||% NA_character_,
-        rna_zscore = ex$rna$zscore %||% NA_real_,
-        protein_level = ex$protein$level %||% NA_integer_,
-        protein_reliability = ex$protein$reliability %||% NA_character_
+      # fromJSON auto-simplified to data.frame with nested sub-data.frames;
+      # extract columns directly using safe accessor
+      .safe <- function(df, col) if (col %in% names(df)) df[[col]] else rep(NA, nrow(df))
+      tissue_df <- expr_input$tissue
+      rna_df <- expr_input$rna
+      protein_df <- expr_input$protein
+      e_dt <- data.table::data.table(
+        tissue_id = .safe(tissue_df, "id"),
+        tissue_label = .safe(tissue_df, "label"),
+        anatomical_systems = sapply(seq_len(nrow(expr_input)), function(i) {
+          vals <- tissue_df$anatomicalSystems[[i]]
+          if (is.null(vals)) NA_character_ else paste(vals, collapse = "; ")
+        }),
+        organs = sapply(seq_len(nrow(expr_input)), function(i) {
+          vals <- tissue_df$organs[[i]]
+          if (is.null(vals)) NA_character_ else paste(vals, collapse = "; ")
+        }),
+        rna_level = .safe(rna_df, "level"),
+        rna_value = .safe(rna_df, "value"),
+        rna_unit = .safe(rna_df, "unit"),
+        rna_zscore = .safe(rna_df, "zscore"),
+        protein_level = .safe(protein_df, "level"),
+        protein_reliability = .safe(protein_df, "reliability"),
+        protein_cell_types = sapply(seq_len(nrow(expr_input)), function(i) {
+          ct <- protein_df$cellType[[i]]
+          if (is.null(ct) || length(ct) == 0) NA_character_
+          else if (is.data.frame(ct)) paste(ct$name, collapse = "; ")
+          else paste(sapply(ct, function(c) c$name), collapse = "; ")
+        })
       )
-      # Add cell type info if available
-      if (!is.null(ex$protein$cellType) && length(ex$protein$cellType) > 0) {
-        row$protein_cell_types <- paste(sapply(ex$protein$cellType, function(ct) ct$name), collapse = "; ")
-      } else {
-        row$protein_cell_types <- NA_character_
-      }
-      row
-    })
-    e_dt <- data.table::rbindlist(expr_list, fill = TRUE)
+    } else {
+      # Standard list-of-lists from fromJSON
+      expr_list <- lapply(expr_input, function(ex) {
+        row <- data.table::data.table(
+          tissue_id = ex$tissue$id %||% NA_character_,
+          tissue_label = ex$tissue$label %||% NA_character_,
+          anatomical_systems = paste(ex$tissue$anatomicalSystems %||% "", collapse = "; "),
+          organs = paste(ex$tissue$organs %||% "", collapse = "; "),
+          rna_level = ex$rna$level %||% NA_integer_,
+          rna_value = ex$rna$value %||% NA_real_,
+          rna_unit = ex$rna$unit %||% NA_character_,
+          rna_zscore = ex$rna$zscore %||% NA_real_,
+          protein_level = ex$protein$level %||% NA_integer_,
+          protein_reliability = ex$protein$reliability %||% NA_character_
+        )
+        if (!is.null(ex$protein$cellType) && length(ex$protein$cellType) > 0) {
+          row$protein_cell_types <- paste(sapply(ex$protein$cellType, function(ct) ct$name), collapse = "; ")
+        } else {
+          row$protein_cell_types <- NA_character_
+        }
+        row
+      })
+      e_dt <- data.table::rbindlist(expr_list, fill = TRUE)
+    }
     e_dt[, human_ensembl_id := h_id]
     results$expression[[length(results$expression) + 1]] <- e_dt
   }
@@ -577,38 +604,62 @@ queryOpenTargets <- function(project_dir = ".",
   if ("mouse_phenotypes" %in% data_types &&
       !is.null(g_dat$mousePhenotypes) &&
       length(g_dat$mousePhenotypes) > 0) {
-    # Guard: fromJSON may auto-simplify to data.frame; convert to list-of-rows
     mp_input <- g_dat$mousePhenotypes
     if (is.data.frame(mp_input)) {
-      mp_input <- lapply(seq_len(nrow(mp_input)), function(i) {
-        lapply(mp_input[i, ], function(x) if (is.list(x)) x[[1]] else x)
-      })
-    }
-    mp_list <- lapply(mp_input, function(mp) {
-      row <- data.table::data.table(
-        phenotype_label = mp$modelPhenotypeLabel %||% NA_character_,
-        phenotype_id = mp$modelPhenotypeId %||% NA_character_,
-        target_from_source_id = mp$targetFromSourceId %||% NA_character_,
-        target_in_model = mp$targetInModel %||% NA_character_,
-        target_mgi_id = mp$targetInModelMgiId %||% NA_character_
+      # fromJSON auto-simplified to data.frame with nested sub-data.frames
+      .safe_mp <- function(df, col) if (col %in% names(df)) df[[col]] else rep(NA, nrow(df))
+      n_mp <- nrow(mp_input)
+      mp_dt <- data.table::data.table(
+        phenotype_label = .safe_mp(mp_input, "modelPhenotypeLabel"),
+        phenotype_id = .safe_mp(mp_input, "modelPhenotypeId"),
+        target_ensembl_id = .safe_mp(mp_input, "targetInModelEnsemblId"),
+        target_in_model = .safe_mp(mp_input, "targetInModel"),
+        target_mgi_id = .safe_mp(mp_input, "targetInModelMgiId"),
+        phenotype_classes = sapply(seq_len(n_mp), function(i) {
+          pc <- mp_input$modelPhenotypeClasses[[i]]
+          if (is.null(pc) || length(pc) == 0) NA_character_
+          else if (is.data.frame(pc)) paste(pc$label, collapse = "; ")
+          else paste(sapply(pc, function(p) p$label), collapse = "; ")
+        }),
+        allelic_composition = sapply(seq_len(n_mp), function(i) {
+          bm <- mp_input$biologicalModels[[i]]
+          if (is.null(bm) || length(bm) == 0) NA_character_
+          else if (is.data.frame(bm)) paste(bm$allelicComposition, collapse = "; ")
+          else paste(sapply(bm, function(b) b$allelicComposition), collapse = "; ")
+        }),
+        genetic_background = sapply(seq_len(n_mp), function(i) {
+          bm <- mp_input$biologicalModels[[i]]
+          if (is.null(bm) || length(bm) == 0) NA_character_
+          else if (is.data.frame(bm)) paste(bm$geneticBackground, collapse = "; ")
+          else paste(sapply(bm, function(b) b$geneticBackground), collapse = "; ")
+        })
       )
-      # Add phenotype classes
-      if (!is.null(mp$modelPhenotypeClasses) && length(mp$modelPhenotypeClasses) > 0) {
-        row$phenotype_classes <- paste(sapply(mp$modelPhenotypeClasses, function(pc) pc$label), collapse = "; ")
-      } else {
-        row$phenotype_classes <- NA_character_
-      }
-      # Add biological models
-      if (!is.null(mp$biologicalModels) && length(mp$biologicalModels) > 0) {
-        row$allelic_composition <- paste(sapply(mp$biologicalModels, function(bm) bm$allelicComposition), collapse = "; ")
-        row$genetic_background <- paste(sapply(mp$biologicalModels, function(bm) bm$geneticBackground), collapse = "; ")
-      } else {
-        row$allelic_composition <- NA_character_
-        row$genetic_background <- NA_character_
-      }
-      row
-    })
-    mp_dt <- data.table::rbindlist(mp_list, fill = TRUE)
+    } else {
+      # Standard list-of-lists from fromJSON
+      mp_list <- lapply(mp_input, function(mp) {
+        row <- data.table::data.table(
+          phenotype_label = mp$modelPhenotypeLabel %||% NA_character_,
+          phenotype_id = mp$modelPhenotypeId %||% NA_character_,
+          target_ensembl_id = mp$targetInModelEnsemblId %||% NA_character_,
+          target_in_model = mp$targetInModel %||% NA_character_,
+          target_mgi_id = mp$targetInModelMgiId %||% NA_character_
+        )
+        if (!is.null(mp$modelPhenotypeClasses) && length(mp$modelPhenotypeClasses) > 0) {
+          row$phenotype_classes <- paste(sapply(mp$modelPhenotypeClasses, function(pc) pc$label), collapse = "; ")
+        } else {
+          row$phenotype_classes <- NA_character_
+        }
+        if (!is.null(mp$biologicalModels) && length(mp$biologicalModels) > 0) {
+          row$allelic_composition <- paste(sapply(mp$biologicalModels, function(bm) bm$allelicComposition), collapse = "; ")
+          row$genetic_background <- paste(sapply(mp$biologicalModels, function(bm) bm$geneticBackground), collapse = "; ")
+        } else {
+          row$allelic_composition <- NA_character_
+          row$genetic_background <- NA_character_
+        }
+        row
+      })
+      mp_dt <- data.table::rbindlist(mp_list, fill = TRUE)
+    }
     mp_dt[, human_ensembl_id := h_id]
     results$mouse_phenotypes[[length(results$mouse_phenotypes) + 1]] <- mp_dt
   }
@@ -649,28 +700,42 @@ queryOpenTargets <- function(project_dir = ".",
   if ("known_drugs" %in% data_types &&
       !is.null(g_dat$knownDrugs$rows) &&
       length(g_dat$knownDrugs$rows) > 0) {
-    # Guard: fromJSON may auto-simplify to data.frame; convert to list-of-rows
     kd_input <- g_dat$knownDrugs$rows
     if (is.data.frame(kd_input)) {
-      kd_input <- lapply(seq_len(nrow(kd_input)), function(i) {
-        lapply(kd_input[i, ], function(x) if (is.list(x)) x[[1]] else x)
-      })
-    }
-    kd_list <- lapply(kd_input, function(kd) {
-      data.table::data.table(
-        drug_id = kd$drugId %||% kd$drug$id %||% NA_character_,
-        drug_name = kd$drug$name %||% NA_character_,
-        drug_type = kd$drug$drugType %||% NA_character_,
-        max_clinical_phase = kd$drug$maximumClinicalTrialPhase %||% NA_integer_,
-        is_approved = kd$drug$isApproved %||% NA,
-        mechanism_of_action = kd$mechanismOfAction %||% NA_character_,
-        disease_id = kd$disease$id %||% NA_character_,
-        disease_name = kd$disease$name %||% NA_character_,
-        trial_phase = kd$phase %||% NA_integer_,
-        trial_status = kd$status %||% NA_character_
+      # fromJSON auto-simplified rows to data.frame with nested drug/disease sub-data.frames
+      .safe_kd <- function(df, col) if (col %in% names(df)) df[[col]] else rep(NA, nrow(df))
+      drug_df <- kd_input$drug
+      disease_df <- kd_input$disease
+      kd_dt <- data.table::data.table(
+        drug_id = .safe_kd(kd_input, "drugId"),
+        drug_name = .safe_kd(drug_df, "name"),
+        drug_type = .safe_kd(drug_df, "drugType"),
+        max_clinical_phase = .safe_kd(drug_df, "maximumClinicalTrialPhase"),
+        is_approved = .safe_kd(drug_df, "isApproved"),
+        mechanism_of_action = .safe_kd(kd_input, "mechanismOfAction"),
+        disease_id = .safe_kd(disease_df, "id"),
+        disease_name = .safe_kd(disease_df, "name"),
+        trial_phase = .safe_kd(kd_input, "phase"),
+        trial_status = .safe_kd(kd_input, "status")
       )
-    })
-    kd_dt <- data.table::rbindlist(kd_list, fill = TRUE)
+    } else {
+      # Standard list-of-lists from fromJSON
+      kd_list <- lapply(kd_input, function(kd) {
+        data.table::data.table(
+          drug_id = kd$drugId %||% kd$drug$id %||% NA_character_,
+          drug_name = kd$drug$name %||% NA_character_,
+          drug_type = kd$drug$drugType %||% NA_character_,
+          max_clinical_phase = kd$drug$maximumClinicalTrialPhase %||% NA_integer_,
+          is_approved = kd$drug$isApproved %||% NA,
+          mechanism_of_action = kd$mechanismOfAction %||% NA_character_,
+          disease_id = kd$disease$id %||% NA_character_,
+          disease_name = kd$disease$name %||% NA_character_,
+          trial_phase = kd$phase %||% NA_integer_,
+          trial_status = kd$status %||% NA_character_
+        )
+      })
+      kd_dt <- data.table::rbindlist(kd_list, fill = TRUE)
+    }
     kd_dt[, human_ensembl_id := h_id]
     results$known_drugs[[length(results$known_drugs) + 1]] <- kd_dt
   }
@@ -714,47 +779,75 @@ queryOpenTargets <- function(project_dir = ".",
   if ("pharmacogenomics" %in% data_types &&
       !is.null(g_dat$pharmacogenomics) &&
       length(g_dat$pharmacogenomics) > 0) {
-    # Guard: fromJSON may auto-simplify to data.frame; convert to list-of-rows
     pg_input <- g_dat$pharmacogenomics
     if (is.data.frame(pg_input)) {
-      pg_input <- lapply(seq_len(nrow(pg_input)), function(i) {
-        lapply(pg_input[i, ], function(x) if (is.list(x)) x[[1]] else x)
-      })
-    }
-    pg_list <- lapply(pg_input, function(pg) {
-      # Extract variant consequence from SequenceOntologyTerm object
-      variant_consequence <- if (is.list(pg$variantFunctionalConsequence)) {
-        pg$variantFunctionalConsequence$label %||% pg$variantFunctionalConsequence$id %||% NA_character_
+      # fromJSON auto-simplified; extract from nested sub-data.frames
+      .safe_pg <- function(df, col) if (col %in% names(df)) df[[col]] else rep(NA, nrow(df))
+      n_pg <- nrow(pg_input)
+      vfc <- pg_input$variantFunctionalConsequence
+      variant_consequence <- if (is.data.frame(vfc)) {
+        .safe_pg(vfc, "label")
       } else {
-        pg$variantFunctionalConsequence %||% NA_character_
+        rep(NA_character_, n_pg)
       }
-      # Extract drugs from nested list
-      drug_ids <- NA_character_
-      drug_names <- NA_character_
-      if (!is.null(pg$drugs) && length(pg$drugs) > 0) {
-        if (is.data.frame(pg$drugs)) {
-          drug_ids <- paste(pg$drugs$drugId[!is.na(pg$drugs$drugId)], collapse = "; ")
-          drug_names <- paste(pg$drugs$drugFromSource[!is.na(pg$drugs$drugFromSource)], collapse = "; ")
-        } else if (is.list(pg$drugs)) {
-          drug_ids <- paste(sapply(pg$drugs, function(d) d$drugId %||% NA_character_), collapse = "; ")
-          drug_names <- paste(sapply(pg$drugs, function(d) d$drugFromSource %||% NA_character_), collapse = "; ")
-        }
-      }
-      data.table::data.table(
-        variant_rsid = pg$variantRsId %||% NA_character_,
+      pg_dt <- data.table::data.table(
+        variant_rsid = .safe_pg(pg_input, "variantRsId"),
         variant_consequence = variant_consequence,
-        genotype_id = pg$genotypeId %||% NA_character_,
-        drug_id = drug_ids,
-        drug_name = drug_names,
-        phenotype_text = pg$phenotypeText %||% NA_character_,
-        genotype_annotation = pg$genotypeAnnotationText %||% NA_character_,
-        phenotype_source_id = pg$phenotypeFromSourceId %||% NA_character_,
-        evidence_level = pg$evidenceLevel %||% NA_character_,
-        datasource_id = pg$datasourceId %||% NA_character_,
-        study_id = pg$studyId %||% NA_character_
+        genotype_id = .safe_pg(pg_input, "genotypeId"),
+        drug_id = sapply(seq_len(n_pg), function(i) {
+          d <- pg_input$drugs[[i]]
+          if (is.null(d) || length(d) == 0) NA_character_
+          else if (is.data.frame(d)) paste(d$drugId[!is.na(d$drugId)], collapse = "; ")
+          else paste(sapply(d, function(x) x$drugId %||% NA_character_), collapse = "; ")
+        }),
+        drug_name = sapply(seq_len(n_pg), function(i) {
+          d <- pg_input$drugs[[i]]
+          if (is.null(d) || length(d) == 0) NA_character_
+          else if (is.data.frame(d)) paste(d$drugFromSource[!is.na(d$drugFromSource)], collapse = "; ")
+          else paste(sapply(d, function(x) x$drugFromSource %||% NA_character_), collapse = "; ")
+        }),
+        phenotype_text = .safe_pg(pg_input, "phenotypeText"),
+        genotype_annotation = .safe_pg(pg_input, "genotypeAnnotationText"),
+        phenotype_source_id = .safe_pg(pg_input, "phenotypeFromSourceId"),
+        evidence_level = .safe_pg(pg_input, "evidenceLevel"),
+        datasource_id = .safe_pg(pg_input, "datasourceId"),
+        study_id = .safe_pg(pg_input, "studyId")
       )
-    })
-    pg_dt <- data.table::rbindlist(pg_list, fill = TRUE)
+    } else {
+      # Standard list-of-lists from fromJSON
+      pg_list <- lapply(pg_input, function(pg) {
+        variant_consequence <- if (is.list(pg$variantFunctionalConsequence)) {
+          pg$variantFunctionalConsequence$label %||% pg$variantFunctionalConsequence$id %||% NA_character_
+        } else {
+          pg$variantFunctionalConsequence %||% NA_character_
+        }
+        drug_ids <- NA_character_
+        drug_names <- NA_character_
+        if (!is.null(pg$drugs) && length(pg$drugs) > 0) {
+          if (is.data.frame(pg$drugs)) {
+            drug_ids <- paste(pg$drugs$drugId[!is.na(pg$drugs$drugId)], collapse = "; ")
+            drug_names <- paste(pg$drugs$drugFromSource[!is.na(pg$drugs$drugFromSource)], collapse = "; ")
+          } else if (is.list(pg$drugs)) {
+            drug_ids <- paste(sapply(pg$drugs, function(d) d$drugId %||% NA_character_), collapse = "; ")
+            drug_names <- paste(sapply(pg$drugs, function(d) d$drugFromSource %||% NA_character_), collapse = "; ")
+          }
+        }
+        data.table::data.table(
+          variant_rsid = pg$variantRsId %||% NA_character_,
+          variant_consequence = variant_consequence,
+          genotype_id = pg$genotypeId %||% NA_character_,
+          drug_id = drug_ids,
+          drug_name = drug_names,
+          phenotype_text = pg$phenotypeText %||% NA_character_,
+          genotype_annotation = pg$genotypeAnnotationText %||% NA_character_,
+          phenotype_source_id = pg$phenotypeFromSourceId %||% NA_character_,
+          evidence_level = pg$evidenceLevel %||% NA_character_,
+          datasource_id = pg$datasourceId %||% NA_character_,
+          study_id = pg$studyId %||% NA_character_
+        )
+      })
+      pg_dt <- data.table::rbindlist(pg_list, fill = TRUE)
+    }
     pg_dt[, human_ensembl_id := h_id]
     results$pharmacogenomics[[length(results$pharmacogenomics) + 1]] <- pg_dt
   }
@@ -1076,7 +1169,8 @@ queryOpenTargetsQTL <- function(project_dir = ".",
           confidence = row$confidence %||% NA_character_,
           credible_set_index = row$credibleSetIndex %||% NA_integer_,
           biosample_id = study$biosample$biosampleId %||% NA_character_,
-          biosample_name = study$biosample$biosampleName %||% NA_character_
+          biosample_name = study$biosample$biosampleName %||% NA_character_,
+          study_target_gene_id = study$target$id %||% NA_character_
         )
 
         # Add L2G scores if available
@@ -1151,8 +1245,17 @@ queryOpenTargetsQTL <- function(project_dir = ".",
     if ("qtl_gene_id" %in% names(credsets_tmp)) {
       extra_ids <- c(extra_ids, stats::na.omit(unique(credsets_tmp$qtl_gene_id)))
     }
+    if ("study_target_gene_id" %in% names(credsets_tmp)) {
+      extra_ids <- c(extra_ids, stats::na.omit(unique(credsets_tmp$study_target_gene_id)))
+    }
     if ("l2g_gene_id" %in% names(credsets_tmp)) {
       extra_ids <- c(extra_ids, stats::na.omit(unique(credsets_tmp$l2g_gene_id)))
+    }
+    # Also extract ENSG IDs embedded in study_id strings
+    if ("study_id" %in% names(credsets_tmp)) {
+      extracted <- toupper(gsub(".*_(ensg[0-9]+).*", "\\1", credsets_tmp$study_id, ignore.case = TRUE))
+      extracted <- extracted[grepl("^ENSG", extracted)]
+      extra_ids <- c(extra_ids, unique(extracted))
     }
   }
   extra_ids <- setdiff(unique(extra_ids), id_map$human_ensembl_id)
@@ -1208,12 +1311,36 @@ queryOpenTargetsQTL <- function(project_dir = ".",
   if (length(results_credsets) > 0) {
     credsets_dt <- data.table::rbindlist(results_credsets, fill = TRUE, use.names = TRUE)
 
-    # Link by qtlGeneId (the gene being studied in molQTL)
+    # Link credible sets to gene symbols
+    # Primary: use qtl_gene_id if available
+    # Fallback 1: use study_target_gene_id from study.target
+    # Fallback 2: extract ENSG ID from study_id string
     if ("qtl_gene_id" %in% names(credsets_dt)) {
+      # Ensure qtl_gene_id is character (may be logical if all NA from API)
+      if (is.logical(credsets_dt$qtl_gene_id)) {
+        credsets_dt[, qtl_gene_id := as.character(qtl_gene_id)]
+      }
+      # Fill empty qtl_gene_id from study target or study_id pattern
+      if ("study_target_gene_id" %in% names(credsets_dt)) {
+        credsets_dt[is.na(qtl_gene_id) | qtl_gene_id == "",
+                    qtl_gene_id := study_target_gene_id]
+      }
+      if ("study_id" %in% names(credsets_dt)) {
+        # Extract ENSG IDs embedded in study_id (e.g., "gtex_ge_artery_tibial_ensg00000083828")
+        extracted <- toupper(gsub(".*_(ensg[0-9]+).*", "\\1", credsets_dt$study_id, ignore.case = TRUE))
+        extracted[!grepl("^ENSG", extracted)] <- NA_character_
+        credsets_dt[is.na(qtl_gene_id) | qtl_gene_id == "",
+                    qtl_gene_id := extracted[is.na(qtl_gene_id) | qtl_gene_id == ""]]
+      }
       credsets_dt <- merge(credsets_dt,
                            id_map[, .(human_ensembl_id, gene_symbol)],
                            by.x = "qtl_gene_id", by.y = "human_ensembl_id",
                            all.x = TRUE)
+    }
+
+    # Drop helper column used only for linking
+    if ("study_target_gene_id" %in% names(credsets_dt)) {
+      credsets_dt[, study_target_gene_id := NULL]
     }
 
     # Filter by L2G score if specified

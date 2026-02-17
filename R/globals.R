@@ -10,5 +10,5 @@ utils::globalVariables(c(
   "..coords_cols", "overlap_type", "overlap_types", "gene_start",
   "gene_end", "i.start", "i.end", "x.start", "x.end",
   "rbindlist", "uniqueN", "gene",
-  "chr_clean", "study_locus_id"
+  "chr_clean", "study_locus_id", "study_target_gene_id", "qtl_gene_id"
 ))

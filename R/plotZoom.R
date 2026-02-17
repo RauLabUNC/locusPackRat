@@ -25,16 +25,16 @@
 #'   the gene track (optional).
 #' @param threshold Numeric: LOD significance threshold used to draw the
 #'   horizontal line on the Manhattan plot (e.g. 5 for a 5-LOD threshold).
-#' @param output_file Character: File path for the output PDF. Defaults to
-#'   \code{"locus_zoom.pdf"} and will save to the \code{.locusPackRat/output}
-#'  directory found at \code{project_dir}.
+#' @param output_file Character: Output filename. Extension sets the device
+#'   (\code{.png} for PNG, \code{.pdf} for PDF; default \code{"locus_zoom.pdf"}).
+#'   Written to \code{.locusPackRat/output/} under \code{project_dir}.
 #' @param text_scale Numeric (optional): Scaling factor for all text elements
 #'   in the plot. If \code{NULL}, a default scaling based on the
 #'   \code{width} and \code{height} is applied (6x4 inches is considered
 #'   "normal" size with no scaling).
 #' @param font_family Character (optional): Font family to use for all text
 #'   elements in the plot. If \code{NULL}, the default system font is used.
-#' @return Invisible \code{TRUE} on success (the plot is written to disk).
+#' @return Invisible file path to the saved plot.
 #'
 #' @details
 #' ## Input File Formats
@@ -71,7 +71,8 @@
 #'
 #' @importFrom data.table fread fwrite setDT setnames as.data.table setorderv copy
 #' @importFrom jsonlite read_json
-#' @importFrom grDevices pdf dev.off
+#' @importFrom grDevices pdf png dev.off
+#' @importFrom tools file_ext
 #' @importFrom plotgardener pageCreate plotManhattan plotGenes plotRanges plotText plotSignal annoYaxis annoHighlight
 #' @importFrom utils capture.output
 #'
@@ -206,8 +207,19 @@ generateLocusZoomPlot <- function(
     }
     
     # Set file to save to the 'output' directory of the project_dir
+    if (basename(output_file) != output_file) {
+        message("Note: output_file should be a filename, not a path. Using basename: ",
+                basename(output_file))
+        output_file <- basename(output_file)
+    }
     output_path <- file.path(project_dir, ".locusPackRat", "output", output_file)
-    grDevices::pdf(output_path, width = width, height = height)
+    ext <- tolower(tools::file_ext(output_file))
+    if (ext == "png") {
+        grDevices::png(output_path, width = width, height = height,
+                       units = "in", res = 150)
+    } else {
+        grDevices::pdf(output_path, width = width, height = height)
+    }
     .quiet_pg(plotgardener::pageCreate(
         width = width,
         height = height,
@@ -361,7 +373,7 @@ generateLocusZoomPlot <- function(
     grDevices::dev.off()
     message("Plot saved to ", output_file)
     message("Citation: Kramer NE, Davis ES, Wenger CD, Deoudes EM, Parker SM, Love MI, Phanstiel DH. Plotgardener: cultivating precise multi-panel figures in R. Bioinformatics, 2022.")
-    invisible(TRUE)
+    invisible(output_path)
 }
 
 .quiet_pg <- function(expr) {

@@ -16,7 +16,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = requireNamespace("Seurat", quietly = TRUE) &&
+         requireNamespace("ggplot2", quietly = TRUE)
 )
 ```
 

@@ -53,9 +53,9 @@ the gene track (optional).}
 \item{threshold}{Numeric: LOD significance threshold used to draw the
 horizontal line on the Manhattan plot (e.g. 5 for a 5-LOD threshold).}
 
-\item{output_file}{Character: File path for the output PDF. Defaults to
- \code{"locus_zoom.pdf"} and will save to the \code{.locusPackRat/output}
-directory found at \code{project_dir}.}
+\item{output_file}{Character: Output filename. Extension sets the device
+(\code{.png} for PNG, \code{.pdf} for PDF; default \code{"locus_zoom.pdf"}).
+Written to \code{.locusPackRat/output/} under \code{project_dir}.}
 
 \item{text_scale}{Numeric (optional): Scaling factor for all text elements
 in the plot. If \code{NULL}, a default scaling based on the
@@ -66,7 +66,7 @@ in the plot. If \code{NULL}, a default scaling based on the
 elements in the plot. If \code{NULL}, the default system font is used.}
 }
 \value{
-Invisible \code{TRUE} on success (the plot is written to disk).
+Invisible file path to the saved plot.
 }
 \description{
 Generates a multi-panel locus plot (Manhattan/scan track, optional signal

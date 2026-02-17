@@ -273,7 +273,10 @@ generateLocusZoomPlot(
   height = 5,
   highlight_genes = c("ZNF586"),
   threshold = 5,
-  output_file = "ZNF586_locus_zoom.pdf"
+  output_file = "ZNF586_locus_zoom.png"
+)
+knitr::include_graphics(
+  file.path("qtl_opentargets_demo", ".locusPackRat", "output", "ZNF586_locus_zoom.png")
 )
 ```
 
@@ -287,7 +290,10 @@ generateLocusZoomPlot(
   height = 5,
   highlight_genes = c("APIP"),
   threshold = 5,
-  output_file = "APIP_locus_zoom.pdf"
+  output_file = "APIP_locus_zoom.png"
+)
+knitr::include_graphics(
+  file.path("qtl_opentargets_demo", ".locusPackRat", "output", "APIP_locus_zoom.png")
 )
 ```
 
@@ -301,7 +307,10 @@ generateLocusZoomPlot(
   height = 5,
   highlight_genes = c("CLEC19A"),
   threshold = 5,
-  output_file = "CLEC19A_locus_zoom.pdf"
+  output_file = "CLEC19A_locus_zoom.png"
+)
+knitr::include_graphics(
+  file.path("qtl_opentargets_demo", ".locusPackRat", "output", "CLEC19A_locus_zoom.png")
 )
 ```
 
@@ -355,6 +364,11 @@ sessionInfo()
 
 # Cleanup
 
-```{r cleanup}
-unlink("qtl_opentargets_demo", recursive = TRUE)
+```{r cleanup, include=FALSE}
+# Deferred so PNGs still exist when pandoc embeds them.
+reg.finalizer(
+  environment(),
+  function(e) unlink("qtl_opentargets_demo", recursive = TRUE),
+  onexit = TRUE
+)
 ```
