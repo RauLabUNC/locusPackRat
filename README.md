@@ -1,181 +1,54 @@
 # locusPackRat
 
-An R package for managing genomic analysis projects. Stores genes or regions with supplementary data and generates formatted Excel output.
+An R package for organizing genomic analysis projects. You give it a set of genes or regions, attach any supplementary data you want, query external databases, and get back a merged Excel sheet (or CSV) ready for downstream work.
+
+Built for QTL/GWAS follow-up, but works for any gene- or region-level study.
 
 ## Installation
 
 ```r
+# From GitHub (requires devtools)
 devtools::install_github("RauLabUNC/locusPackRat")
 ```
 
-## Quick Start
+Bioconductor packages for locus zoom plots (optional):
+
+```r
+BiocManager::install(c("plotgardener", "TxDb.Mmusculus.UCSC.mm39.knownGene", "org.Mm.eg.db"))
+```
+
+## Quick start
 
 ```r
 library(locusPackRat)
 
-# 1. Initialize a project with your genes
-genes <- data.frame(
-  gene_symbol = c("Myc", "Tp53", "Egfr", "Vegfa"),
-  log2FC = c(2.5, -1.8, 3.2, 1.5),
-  padj = c(0.001, 0.01, 0.0001, 0.05)
-)
-
+# Initialize a project
 initPackRat(
-  data = genes,
-  mode = "gene",
-  species = "mouse",
-  genome = "mm39",
+  data = data.frame(gene_symbol = c("Myc", "Tp53", "Egfr"),
+                    log2FC = c(2.5, -1.8, 3.2)),
+  mode = "gene", species = "mouse", genome = "mm39",
   project_dir = "my_analysis"
 )
 
-# 2. Query external databases (optional)
+# Attach your own data
+addRatTable(my_annotations, table_name = "pathway_data",
+            link_type = "gene", link_by = "gene_symbol",
+            project_dir = "my_analysis")
+
+# Pull from external databases
 queryMouseMine(project_dir = "my_analysis")
 queryOpenTargets(project_dir = "my_analysis")
 
-# 3. Generate Excel output
-makeGeneSheet(
-  format = "excel",
-  output_file = "results.xlsx",
-  project_dir = "my_analysis"
-)
+# Export everything
+makeGeneSheet(format = "excel", output_file = "results.xlsx",
+              project_dir = "my_analysis")
 ```
 
-## Core Functions
+See the package vignettes for full walkthroughs (`region_qtl_opentargets`, `genenetwork_qtl`, `single_cell_integration`).
 
-### `initPackRat()`
+## Supported genomes
 
-Creates a project directory with your genes or genomic regions. Automatically adds genomic coordinates and orthology mappings from built-in reference files.
-
-```r
-initPackRat(
-  data = my_genes,
-  mode = "gene",
-  species = "mouse",
-  genome = "mm39",
-  project_dir = "."
-)
-```
-
-**Modes:** `"gene"` or `"region"`
-**Species:** `"human"` or `"mouse"`
-**Genomes:** `"hg38"`, `"hg19"`, `"mm39"`, `"mm10"`
-
-### `addRatTable()`
-
-Links supplementary data to your project by gene symbol or coordinates.
-
-```r
-addRatTable(
-  data = my_annotations,
-  table_name = "pathway_data",
-  link_type = "gene",
-  link_by = "gene_symbol",
-  abbreviation = "pw",
-  project_dir = "."
-)
-```
-
-The `abbreviation` parameter sets a short prefix (e.g., "pw") used to distinguish columns when multiple tables share the same column names in Excel output.
-
-### `makeGeneSheet()`
-
-Generates CSV or Excel output with all project data merged together.
-
-```r
-makeGeneSheet(
-  format = "excel",
-  output_file = "results.xlsx",
-  include_supplementary = TRUE,
-  prefix_mode = "collision",
-  project_dir = "."
-)
-```
-
-**prefix_mode options:**
-- `"collision"` (default): Only prefixes columns that would overwrite existing ones
-- `"abbreviated"`: Prefixes all columns from tables that have an abbreviation set
-- `"always"`: Prefixes all supplementary columns using abbreviation or table name
-
-## Query Functions
-
-These functions fetch data from external databases and save results as supplementary tables.
-
-### `queryMouseMine()`
-
-Queries MouseMine for gene-phenotype associations (mouse projects only). Uses the REST API directly—no InterMineR dependency.
-
-```r
-queryMouseMine(project_dir = "my_analysis")
-# Creates: mouse_phenotypes table (abbreviation: "mm")
-```
-
-### `queryOpenTargets()`
-Queries Open Targets for disease associations, genetic constraints, and drug tractability. Works for both human and mouse projects (mouse genes are mapped to human orthologs).
-
-```r
-queryOpenTargets(project_dir = "my_analysis")
-# Creates: ot_diseases (abbrev: "otd"), ot_constraints ("otc"), ot_tractability ("ott")
-```
-
-## Visualization Function
-
-###`generateLocusZoomPlot()`
-Generates a LocusZoom-style plot for visualization of a locus.  Requires the plotGardener package.  
-
-```r 
-generateLocusZoomPlot(
-     region_id="region_1",
-     project_dir="my_analysis",
-     scan_table="LoD_Values",
-     signal_table="CC_Founder_Data",
-     width=10,
-     height=6,
-     threshold=4,
-     layout_ratios = c(manhattan = 0.35, signal = 0.40, genes = 0.25))
-
-```
-
-
-## Other Functions
-
-- `listPackRatTables()` - List supplementary tables in a project
-- `removeRatTable()` - Delete a supplementary table from a project
-
-
-## Project Structure
-
-```
-my_analysis/
-└── .locusPackRat/
-    ├── input/
-    │   ├── genes.csv
-    │   └── orthology.csv
-    ├── supplementary/
-    │   ├── mouse_phenotypes.csv
-    │   └── ot_diseases.csv
-    ├── output/
-    │   └── results.xlsx
-    └── config.json
-```
-
-## Supported Genomes
-
-| Species | Genome | Genes |
-|---------|--------|-------|
-| Human | hg38 | ~30,000 |
-| Human | hg19 | ~24,000 |
-| Mouse | mm39 | ~57,000 |
-| Mouse | mm10 | ~38,000 |
-
-## Dependencies
-
-**Required:** data.table, jsonlite, openxlsx, dplyr, httr, Bioconductor 3.22
-**Optional:** plotgardener (for visualization)
-
-## Future Plans
-
-We plan to extend locusPackRat to other species, notably flies and rats.  Please leave us a note of any other species you might wish to have us incorporate!
-
+Human (hg38, hg19) and mouse (mm39, mm10). We plan to add other species — let us know what would be useful.
 
 ## Citation
 

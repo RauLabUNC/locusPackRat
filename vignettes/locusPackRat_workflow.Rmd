@@ -647,7 +647,7 @@ In some cases, users may have data that use older genome builds (e.g. mm9) and w
 
 Although LocusPackRat does not have a built-in function to accomodate other builds, the liftOver package, paired with chain files drawn from the UCSC genome browser, can easily do these conversions.
 
-```{r liftOver, message=F}
+```{r liftOver, message=F, eval=requireNamespace("liftOver", quietly=TRUE)}
 library(liftOver)
 mm9_ncRNA = read.csv(system.file("extdata", "sample_mm9_ncRNA.csv", package = "locusPackRat"))
 chain = import.chain( system.file("extdata", "mm9ToMm39.over.chain", package = "locusPackRat"))
