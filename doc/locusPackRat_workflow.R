@@ -398,6 +398,37 @@ makeGeneSheet(
   project_dir = "atacseq_analysis"
 )
 
+## ----build_packet_qtl, message=TRUE-------------------------------------------
+# Package the QTL analysis for sharing
+buildPacket(project_dir = "qtl_analysis", overwrite = TRUE)
+
+## ----build_packet_custom, eval=FALSE------------------------------------------
+# # Write to a specific directory with a custom name
+# buildPacket(
+#   project_dir = "rnaseq_analysis",
+#   output_path = "~/shared_results",
+#   filename = "rnaseq_v2_packet.zip",
+#   overwrite = TRUE
+# )
+# 
+# # Skip the README if you prefer
+# buildPacket(project_dir = "atacseq_analysis", include_readme = FALSE)
+
+## ----build_packet_supplementary, eval=FALSE-----------------------------------
+# # Include all supplementary CSVs
+# buildPacket(
+#   project_dir = "qtl_analysis",
+#   include_supplementary = TRUE,
+#   overwrite = TRUE
+# )
+# 
+# # Include only specific supplementary tables
+# buildPacket(
+#   project_dir = "qtl_analysis",
+#   include_supplementary = c("mouseMine", "openTargets_diseases"),
+#   overwrite = TRUE
+# )
+
 ## ----crossspecies_analysis, message=TRUE--------------------------------------
 # Define human cancer genes
 cancer_genes <- c("BRCA1", "BRCA2", "TP53", "EGFR", "KRAS", "MYC",

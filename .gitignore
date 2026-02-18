@@ -50,3 +50,5 @@ tests/integration/data/*.csv
 # Documentation builds (local)
 docs/
 _site/
+/doc/
+/Meta/

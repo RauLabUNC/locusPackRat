@@ -410,9 +410,19 @@ fallback.</p>
 <div id="prerequisites" class="section level1">
 <h1>Prerequisites</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(locusPackRat)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(jsonlite)</span></code></pre></div>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;union&#39;</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;intersect&#39;</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;setdiff&#39;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;intersect&#39;</span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;union&#39;</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;intersect&#39;</span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;setdiff&#39;</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;union&#39;</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;intersect&#39;</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt; Warning: multiple methods tables found for &#39;setdiff&#39;</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="fu">library</span>(jsonlite)</span></code></pre></div>
 </div>
 <div id="genenetwork2-api-basics" class="section level1">
 <h1>GeneNetwork2 API Basics</h1>
@@ -518,7 +528,7 @@ interest.</p>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co"># The live endpoint returns ALL traits; filter to our gene</span></span>
 <span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co"># The cached version is already pre-filtered</span></span>
 <span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(cisd2_traits) <span class="sc">&gt;</span> <span class="dv">20</span>) {</span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="co"># Live data — filter by Symbol column</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="co"># Live data -- filter by Symbol column</span></span>
 <span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  cisd2_traits <span class="ot">&lt;-</span> cisd2_traits[<span class="fu">grepl</span>(gene_of_interest, cisd2_traits<span class="sc">$</span>Symbol,</span>
 <span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>                                     <span class="at">ignore.case =</span> <span class="cn">TRUE</span>), ]</span>
 <span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>}</span>
@@ -619,7 +629,7 @@ across the genome.</p>
 <span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a><span class="co">#&gt; 4:      3 129.6428 6.718934 1.910142e-07     rs30261132</span></span>
 <span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a><span class="co">#&gt; 5:      3 129.6450 6.718934 1.910142e-07   UNC030323436</span></span></code></pre></div>
 <p>The strongest eQTL for Cisd2 maps to chromosome 3, near the gene’s
-own position — consistent with a <em>cis</em>-eQTL, which supports its
+own position – consistent with a <em>cis</em>-eQTL, which supports its
 candidacy in a QTL study targeting this region.</p>
 </div>
 </div>
@@ -699,9 +709,9 @@ dataset, providing higher-level trait-QTL associations.</p>
 <span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; Processing gene list...</span></span>
 <span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt;   Matched all 5 genes to coordinates</span></span>
 <span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; Generating orthology information...</span></span>
-<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Saved gene data to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/input/genes.csv</span></span>
-<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/input/orthology.csv</span></span>
-<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Created config file: /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/config.json</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Saved gene data to /work/appscr/r/bgural/RtmpFanPIz/gn_demo_project/.locusPackRat/input/genes.csv</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to /work/appscr/r/bgural/RtmpFanPIz/gn_demo_project/.locusPackRat/input/orthology.csv</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Created config file: /work/appscr/r/bgural/RtmpFanPIz/gn_demo_project/.locusPackRat/config.json</span></span>
 <span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; locusPackRat project initialized successfully!</span></span>
 <span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; Mode: gene | Species: mouse | Genome: mm39</span></span>
@@ -744,7 +754,7 @@ build a summary from the GEMMA results computed above.</p>
 <span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; 1:       Cisd2         6.8            3      132.23         TRUE HC_M2_0606_P</span></span>
 <span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to mouse mm39 project...</span></span>
 <span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt; Linking data by gene_symbol...</span></span>
-<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl.csv</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/RtmpFanPIz/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl.csv</span></span>
 <span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt; Linked 1 of 1 input rows</span></span>
 <span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span></code></pre></div>
 </div>
@@ -752,7 +762,7 @@ build a summary from the GEMMA results computed above.</p>
 <h2>Point-Level Integration</h2>
 <p>Use <code>link_type = &quot;region&quot;</code> when you have position-level
 QTL scan data that should be mapped to overlapping genes/regions.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Use the full scan data from GEMMA — keep significant hits only</span></span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Use the full scan data from GEMMA -- keep significant hits only</span></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;eqtl_scan&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(eqtl_scan) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  significant_hits <span class="ot">&lt;-</span> eqtl_scan[lod <span class="sc">&gt;</span> <span class="dv">3</span>]</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Integrating&quot;</span>, <span class="fu">nrow</span>(significant_hits), <span class="st">&quot;significant markers</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
@@ -777,7 +787,7 @@ QTL scan data that should be mapped to overlapping genes/regions.</p>
 <span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>}</span>
 <span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; Integrating 252 significant markers</span></span>
 <span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to mouse mm39 project...</span></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl_scan.csv</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/RtmpFanPIz/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl_scan.csv</span></span>
 <span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; Linked 252 of 252 input rows</span></span>
 <span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span></code></pre></div>
 </div>
@@ -798,18 +808,22 @@ QTL scan data that should be mapped to overlapping genes/regions.</p>
 <p>The <a href="https://github.com/kbroman/GNapi">GNapi</a> R package by
 Karl Broman provides a more structured R client for the GeneNetwork2
 API. If you prefer a packaged interface:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Install GNapi</span></span>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Install GNapi (https://github.com/kbroman/GNapi)</span></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># remotes::install_github(&quot;kbroman/GNapi&quot;)</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">library</span>(GNapi)</span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># List available species</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># List available species and groups</span></span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">list_species</span>()</span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co"># List BxD datasets</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>bxd_datasets <span class="ot">&lt;-</span> <span class="fu">list_datasets</span>(<span class="st">&quot;BXD&quot;</span>)</span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
-<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co"># Get trait data</span></span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>trait_data <span class="ot">&lt;-</span> <span class="fu">get_trait</span>(<span class="st">&quot;HC_M2_0606_P&quot;</span>, <span class="st">&quot;1428441_at&quot;</span>)</span></code></pre></div>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>groups  <span class="ot">&lt;-</span> <span class="fu">list_groups</span>(<span class="st">&quot;mouse&quot;</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co"># List BxD datasets</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>bxd_datasets <span class="ot">&lt;-</span> <span class="fu">list_datasets</span>(<span class="st">&quot;BXD&quot;</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co"># Run GEMMA QTL scan for a specific trait</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>gemma_scan <span class="ot">&lt;-</span> <span class="fu">run_gemma</span>(<span class="st">&quot;HC_M2_0606_P&quot;</span>, <span class="st">&quot;1428441_at&quot;</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co"># Find correlated traits</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>corr <span class="ot">&lt;-</span> <span class="fu">run_correlation</span>(<span class="st">&quot;HC_M2_0606_P&quot;</span>, <span class="st">&quot;BXD&quot;</span>, <span class="st">&quot;1428441_at&quot;</span>)</span></code></pre></div>
 </div>
 <div id="tips-and-considerations" class="section level1">
 <h1>Tips and Considerations</h1>
@@ -858,7 +872,7 @@ for convergent evidence.</p></li>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
-<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; [1] jsonlite_2.0.0     httr_1.4.8         data.table_1.17.8  locusPackRat_0.6.1</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; [1] jsonlite_2.0.0     httr_1.4.8         data.table_1.17.8  locusPackRat_0.6.2</span></span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt;  [1] SummarizedExperiment_1.36.0 gtable_0.3.6               </span></span>
@@ -874,7 +888,7 @@ for convergent evidence.</p></li>
 <span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a><span class="co">#&gt; [21] pkgconfig_2.0.3             Matrix_1.7-4               </span></span>
 <span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt; [23] ggplotify_0.1.3             plotgardener_1.12.0        </span></span>
 <span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a><span class="co">#&gt; [25] RColorBrewer_1.1-3          S7_0.2.1                   </span></span>
-<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co">#&gt; [27] S4Vectors_0.44.0            lifecycle_1.0.5            </span></span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co">#&gt; [27] S4Vectors_0.48.0            lifecycle_1.0.5            </span></span>
 <span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a><span class="co">#&gt; [29] GenomeInfoDbData_1.2.13     compiler_4.5.2             </span></span>
 <span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a><span class="co">#&gt; [31] farver_2.1.2                Rsamtools_2.22.0           </span></span>
 <span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a><span class="co">#&gt; [33] Biostrings_2.74.1           codetools_0.2-20           </span></span>
@@ -900,7 +914,7 @@ for convergent evidence.</p></li>
 <span id="cb13-63"><a href="#cb13-63" tabindex="-1"></a><span class="co">#&gt; [73] GenomicRanges_1.58.0        IRanges_2.40.1             </span></span>
 <span id="cb13-64"><a href="#cb13-64" tabindex="-1"></a><span class="co">#&gt; [75] rtracklayer_1.66.0          gridGraphics_0.5-1         </span></span>
 <span id="cb13-65"><a href="#cb13-65" tabindex="-1"></a><span class="co">#&gt; [77] rlang_1.1.7                 Rcpp_1.1.1                 </span></span>
-<span id="cb13-66"><a href="#cb13-66" tabindex="-1"></a><span class="co">#&gt; [79] glue_1.8.0                  BiocGenerics_0.52.0        </span></span>
+<span id="cb13-66"><a href="#cb13-66" tabindex="-1"></a><span class="co">#&gt; [79] glue_1.8.0                  BiocGenerics_0.56.0        </span></span>
 <span id="cb13-67"><a href="#cb13-67" tabindex="-1"></a><span class="co">#&gt; [81] strawr_0.0.92               Rhdf5lib_1.28.0            </span></span>
 <span id="cb13-68"><a href="#cb13-68" tabindex="-1"></a><span class="co">#&gt; [83] R6_2.6.1                    MatrixGenerics_1.18.1      </span></span>
 <span id="cb13-69"><a href="#cb13-69" tabindex="-1"></a><span class="co">#&gt; [85] GenomicAlignments_1.42.0    fs_1.6.6                   </span></span>

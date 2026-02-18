@@ -401,6 +401,11 @@ Package Structure Before Creating Output</a></li>
 Region Analysis Workbooks</a></li>
 </ul></li>
 </ul></li>
+<li><a href="#building-shareable-packets" id="toc-building-shareable-packets">Building Shareable Packets</a>
+<ul>
+<li><a href="#including-supplementary-csvs" id="toc-including-supplementary-csvs">Including Supplementary
+CSVs</a></li>
+</ul></li>
 <li><a href="#working-across-species-and-genome-builds" id="toc-working-across-species-and-genome-builds">Working Across Species
 and Genome Builds</a>
 <ul>
@@ -1203,90 +1208,142 @@ abbreviation will have it appended by default.</p>
 </div>
 </div>
 </div>
+<div id="building-shareable-packets" class="section level1">
+<h1>Building Shareable Packets</h1>
+<p>Once an analysis is complete, <code>buildPacket()</code> bundles
+everything in <code>.locusPackRat/output/</code> into a single zip
+archive with an auto-generated <code>README.md</code> summarizing the
+project metadata, supplementary data sources, and included files. This
+makes it easy to share results with collaborators who may not have R
+installed.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Package the QTL analysis for sharing</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a><span class="fu">buildPacket</span>(<span class="at">project_dir =</span> <span class="st">&quot;qtl_analysis&quot;</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="co">#&gt; Packet created: /proj/raulab/users/brian/packrat/vignettes/qtl_analysis/qtl_analysis_packet.zip (7.6 MB)</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="co">#&gt; Contains 3 file(s)</span></span></code></pre></div>
+<p>The zip contains every file from the project’s output directory
+(Excel workbooks, locus zoom plots, CSVs) plus a README with project
+metadata drawn from <code>config.json</code> and
+<code>listPackRatTables()</code>.</p>
+<p>You can also customize the output location and filename:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co"># Write to a specific directory with a custom name</span></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">buildPacket</span>(</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="at">output_path =</span> <span class="st">&quot;~/shared_results&quot;</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>  <span class="at">filename =</span> <span class="st">&quot;rnaseq_v2_packet.zip&quot;</span>,</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>)</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a><span class="co"># Skip the README if you prefer</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a><span class="fu">buildPacket</span>(<span class="at">project_dir =</span> <span class="st">&quot;atacseq_analysis&quot;</span>, <span class="at">include_readme =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div id="including-supplementary-csvs" class="section level3">
+<h3>Including Supplementary CSVs</h3>
+<p>By default, <code>buildPacket()</code> bundles only the output files
+(Excel workbooks, plots, etc.). Set
+<code>include_supplementary = TRUE</code> to also include the raw
+supplementary CSV files from <code>.locusPackRat/supplementary/</code>,
+or pass a character vector to include specific tables:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># Include all supplementary CSVs</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">buildPacket</span>(</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;qtl_analysis&quot;</span>,</span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>)</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="co"># Include only specific supplementary tables</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="fu">buildPacket</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;qtl_analysis&quot;</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="fu">c</span>(<span class="st">&quot;mouseMine&quot;</span>, <span class="st">&quot;openTargets_diseases&quot;</span>),</span>
+<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a>  <span class="at">overwrite =</span> <span class="cn">TRUE</span></span>
+<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a>)</span></code></pre></div>
+<p>Supplementary files are placed in a <code>supplementary/</code>
+subdirectory within the zip, and the auto-generated README lists them in
+a separate “Included Supplementary Files” table.</p>
+</div>
+</div>
 <div id="working-across-species-and-genome-builds" class="section level1">
 <h1>Working Across Species and Genome Builds</h1>
 <div id="human-gene-analysis-with-mouse-orthologs" class="section level2">
 <h2>Human Gene Analysis with Mouse Orthologs</h2>
 <p>The package automatically handles orthology mapping between human and
 mouse using the built-in coordinate files.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co"># Define human cancer genes</span></span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>cancer_genes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;BRCA1&quot;</span>, <span class="st">&quot;BRCA2&quot;</span>, <span class="st">&quot;TP53&quot;</span>, <span class="st">&quot;EGFR&quot;</span>, <span class="st">&quot;KRAS&quot;</span>, <span class="st">&quot;MYC&quot;</span>,</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>                 <span class="st">&quot;PTEN&quot;</span>, <span class="st">&quot;RB1&quot;</span>, <span class="st">&quot;VHL&quot;</span>, <span class="st">&quot;APC&quot;</span>, <span class="st">&quot;ATM&quot;</span>, <span class="st">&quot;CDKN2A&quot;</span>,</span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>                 <span class="st">&quot;MLH1&quot;</span>, <span class="st">&quot;MSH2&quot;</span>, <span class="st">&quot;BRAF&quot;</span>, <span class="st">&quot;PIK3CA&quot;</span>, <span class="st">&quot;ERBB2&quot;</span>, <span class="st">&quot;ALK&quot;</span>)</span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a></span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>human_genes <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="at">gene_symbol =</span> cancer_genes,</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>  <span class="at">cancer_type =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;breast&quot;</span>, <span class="dv">2</span>), <span class="st">&quot;multiple&quot;</span>, <span class="st">&quot;lung&quot;</span>, <span class="st">&quot;colorectal&quot;</span>, <span class="st">&quot;multiple&quot;</span>,</span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>                  <span class="st">&quot;brain&quot;</span>, <span class="st">&quot;retinoblastoma&quot;</span>, <span class="st">&quot;kidney&quot;</span>, <span class="st">&quot;colorectal&quot;</span>, <span class="st">&quot;breast&quot;</span>, <span class="st">&quot;melanoma&quot;</span>,</span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>                  <span class="fu">rep</span>(<span class="st">&quot;colorectal&quot;</span>, <span class="dv">2</span>), <span class="st">&quot;melanoma&quot;</span>, <span class="st">&quot;multiple&quot;</span>, <span class="st">&quot;breast&quot;</span>, <span class="st">&quot;lung&quot;</span>),</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>  <span class="at">mutation_frequency =</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="fu">length</span>(cancer_genes), <span class="dv">5</span>, <span class="dv">80</span>), <span class="dv">1</span>)</span>
-<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>)</span>
-<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a></span>
-<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="co"># Initialize with automatic orthology mapping</span></span>
-<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a><span class="fu">initPackRat</span>(</span>
-<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a>  <span class="at">data =</span> human_genes,</span>
-<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;gene&quot;</span>,</span>
-<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;human&quot;</span>,</span>
-<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg38&quot;</span>,</span>
-<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span>,</span>
-<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a>  <span class="at">force =</span> <span class="cn">TRUE</span></span>
-<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a>)</span>
-<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; Initializing locusPackRat project...</span></span>
-<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt; Note: All data added to this project must use the hg38 genome build. Mixing genome builds will cause incorrect coordinate matching. Use rtracklayer::liftOver() to convert coordinates if needed.</span></span>
-<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt; Processing gene list...</span></span>
-<span id="cb22-26"><a href="#cb22-26" tabindex="-1"></a><span class="co">#&gt;   Matched all 18 genes to coordinates</span></span>
-<span id="cb22-27"><a href="#cb22-27" tabindex="-1"></a><span class="co">#&gt; Generating orthology information...</span></span>
-<span id="cb22-28"><a href="#cb22-28" tabindex="-1"></a><span class="co">#&gt; Saved gene data to cancer_genes/.locusPackRat/input/genes.csv</span></span>
-<span id="cb22-29"><a href="#cb22-29" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to cancer_genes/.locusPackRat/input/orthology.csv</span></span>
-<span id="cb22-30"><a href="#cb22-30" tabindex="-1"></a><span class="co">#&gt; Created config file: cancer_genes/.locusPackRat/config.json</span></span>
-<span id="cb22-31"><a href="#cb22-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-32"><a href="#cb22-32" tabindex="-1"></a><span class="co">#&gt; locusPackRat project initialized successfully!</span></span>
-<span id="cb22-33"><a href="#cb22-33" tabindex="-1"></a><span class="co">#&gt; Mode: gene | Species: human | Genome: hg38</span></span>
-<span id="cb22-34"><a href="#cb22-34" tabindex="-1"></a><span class="co">#&gt; Processed 18 genes</span></span>
-<span id="cb22-35"><a href="#cb22-35" tabindex="-1"></a></span>
-<span id="cb22-36"><a href="#cb22-36" tabindex="-1"></a><span class="co"># Add clinical significance data</span></span>
-<span id="cb22-37"><a href="#cb22-37" tabindex="-1"></a>clinical_data <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb22-38"><a href="#cb22-38" tabindex="-1"></a>  <span class="at">gene_symbol =</span> cancer_genes,</span>
-<span id="cb22-39"><a href="#cb22-39" tabindex="-1"></a>  <span class="at">pathogenicity =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">&quot;pathogenic&quot;</span>, <span class="st">&quot;likely_pathogenic&quot;</span>, <span class="st">&quot;VUS&quot;</span>),</span>
-<span id="cb22-40"><a href="#cb22-40" tabindex="-1"></a>                        <span class="fu">length</span>(cancer_genes), <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb22-41"><a href="#cb22-41" tabindex="-1"></a>                        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>)),</span>
-<span id="cb22-42"><a href="#cb22-42" tabindex="-1"></a>  <span class="at">FDA_approved_drug =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), <span class="fu">length</span>(cancer_genes),</span>
-<span id="cb22-43"><a href="#cb22-43" tabindex="-1"></a>                            <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.7</span>)),</span>
-<span id="cb22-44"><a href="#cb22-44" tabindex="-1"></a>  <span class="at">clinical_trials =</span> <span class="fu">sample</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, <span class="fu">length</span>(cancer_genes), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb22-45"><a href="#cb22-45" tabindex="-1"></a>)</span>
-<span id="cb22-46"><a href="#cb22-46" tabindex="-1"></a></span>
-<span id="cb22-47"><a href="#cb22-47" tabindex="-1"></a><span class="fu">addRatTable</span>(</span>
-<span id="cb22-48"><a href="#cb22-48" tabindex="-1"></a>  <span class="at">data =</span> clinical_data,</span>
-<span id="cb22-49"><a href="#cb22-49" tabindex="-1"></a>  <span class="at">table_name =</span> <span class="st">&quot;clinical_significance&quot;</span>,</span>
-<span id="cb22-50"><a href="#cb22-50" tabindex="-1"></a>  <span class="at">link_type =</span> <span class="st">&quot;gene&quot;</span>,</span>
-<span id="cb22-51"><a href="#cb22-51" tabindex="-1"></a>  <span class="at">link_by =</span> <span class="st">&quot;gene_symbol&quot;</span>,</span>
-<span id="cb22-52"><a href="#cb22-52" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span></span>
-<span id="cb22-53"><a href="#cb22-53" tabindex="-1"></a>)</span>
-<span id="cb22-54"><a href="#cb22-54" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to human hg38 project...</span></span>
-<span id="cb22-55"><a href="#cb22-55" tabindex="-1"></a><span class="co">#&gt; Linking data by gene_symbol...</span></span>
-<span id="cb22-56"><a href="#cb22-56" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to cancer_genes/.locusPackRat/supplementary/clinical_significance.csv</span></span>
-<span id="cb22-57"><a href="#cb22-57" tabindex="-1"></a><span class="co">#&gt; Linked 18 of 18 input rows</span></span>
-<span id="cb22-58"><a href="#cb22-58" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span>
-<span id="cb22-59"><a href="#cb22-59" tabindex="-1"></a></span>
-<span id="cb22-60"><a href="#cb22-60" tabindex="-1"></a><span class="co"># Generate cross-species analysis workbook</span></span>
-<span id="cb22-61"><a href="#cb22-61" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
-<span id="cb22-62"><a href="#cb22-62" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;excel&quot;</span>,</span>
-<span id="cb22-63"><a href="#cb22-63" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;cancer_genes_analysis.xlsx&quot;</span>,</span>
-<span id="cb22-64"><a href="#cb22-64" tabindex="-1"></a>  <span class="at">split_by =</span> <span class="st">&quot;criteria&quot;</span>,</span>
-<span id="cb22-65"><a href="#cb22-65" tabindex="-1"></a>  <span class="at">split_criteria =</span> <span class="fu">list</span>(</span>
-<span id="cb22-66"><a href="#cb22-66" tabindex="-1"></a>    <span class="st">&quot;High_Frequency&quot;</span> <span class="ot">=</span> <span class="st">&quot;mutation_frequency &gt; 30&quot;</span>,</span>
-<span id="cb22-67"><a href="#cb22-67" tabindex="-1"></a>    <span class="st">&quot;FDA_Targets&quot;</span> <span class="ot">=</span> <span class="st">&quot;FDA_approved_drug == TRUE&quot;</span>,</span>
-<span id="cb22-68"><a href="#cb22-68" tabindex="-1"></a>    <span class="st">&quot;Breast_Cancer&quot;</span> <span class="ot">=</span> <span class="st">&quot;cancer_type == &#39;breast&#39;&quot;</span>,</span>
-<span id="cb22-69"><a href="#cb22-69" tabindex="-1"></a>    <span class="st">&quot;With_Mouse_Ortholog&quot;</span> <span class="ot">=</span> <span class="st">&quot;!is.na(mouse_gene_symbol)&quot;</span></span>
-<span id="cb22-70"><a href="#cb22-70" tabindex="-1"></a>  ),</span>
-<span id="cb22-71"><a href="#cb22-71" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb22-72"><a href="#cb22-72" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span></span>
-<span id="cb22-73"><a href="#cb22-73" tabindex="-1"></a>)</span>
-<span id="cb22-74"><a href="#cb22-74" tabindex="-1"></a><span class="co">#&gt; Generating gene sheet from cancer_genes/.locusPackRat...</span></span>
-<span id="cb22-75"><a href="#cb22-75" tabindex="-1"></a><span class="co">#&gt; Found 1 supplementary files: clinical_significance.csv</span></span>
-<span id="cb22-76"><a href="#cb22-76" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb22-77"><a href="#cb22-77" tabindex="-1"></a><span class="co">#&gt;   Linking clinical_significance (Exact Match: gene_symbol)</span></span>
-<span id="cb22-78"><a href="#cb22-78" tabindex="-1"></a><span class="co">#&gt; Saved Excel to cancer_genes/.locusPackRat/output/cancer_genes_analysis.xlsx</span></span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="co"># Define human cancer genes</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>cancer_genes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;BRCA1&quot;</span>, <span class="st">&quot;BRCA2&quot;</span>, <span class="st">&quot;TP53&quot;</span>, <span class="st">&quot;EGFR&quot;</span>, <span class="st">&quot;KRAS&quot;</span>, <span class="st">&quot;MYC&quot;</span>,</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>                 <span class="st">&quot;PTEN&quot;</span>, <span class="st">&quot;RB1&quot;</span>, <span class="st">&quot;VHL&quot;</span>, <span class="st">&quot;APC&quot;</span>, <span class="st">&quot;ATM&quot;</span>, <span class="st">&quot;CDKN2A&quot;</span>,</span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>                 <span class="st">&quot;MLH1&quot;</span>, <span class="st">&quot;MSH2&quot;</span>, <span class="st">&quot;BRAF&quot;</span>, <span class="st">&quot;PIK3CA&quot;</span>, <span class="st">&quot;ERBB2&quot;</span>, <span class="st">&quot;ALK&quot;</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>human_genes <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>  <span class="at">gene_symbol =</span> cancer_genes,</span>
+<span id="cb25-8"><a href="#cb25-8" tabindex="-1"></a>  <span class="at">cancer_type =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">&quot;breast&quot;</span>, <span class="dv">2</span>), <span class="st">&quot;multiple&quot;</span>, <span class="st">&quot;lung&quot;</span>, <span class="st">&quot;colorectal&quot;</span>, <span class="st">&quot;multiple&quot;</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" tabindex="-1"></a>                  <span class="st">&quot;brain&quot;</span>, <span class="st">&quot;retinoblastoma&quot;</span>, <span class="st">&quot;kidney&quot;</span>, <span class="st">&quot;colorectal&quot;</span>, <span class="st">&quot;breast&quot;</span>, <span class="st">&quot;melanoma&quot;</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" tabindex="-1"></a>                  <span class="fu">rep</span>(<span class="st">&quot;colorectal&quot;</span>, <span class="dv">2</span>), <span class="st">&quot;melanoma&quot;</span>, <span class="st">&quot;multiple&quot;</span>, <span class="st">&quot;breast&quot;</span>, <span class="st">&quot;lung&quot;</span>),</span>
+<span id="cb25-11"><a href="#cb25-11" tabindex="-1"></a>  <span class="at">mutation_frequency =</span> <span class="fu">round</span>(<span class="fu">runif</span>(<span class="fu">length</span>(cancer_genes), <span class="dv">5</span>, <span class="dv">80</span>), <span class="dv">1</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" tabindex="-1"></a>)</span>
+<span id="cb25-13"><a href="#cb25-13" tabindex="-1"></a></span>
+<span id="cb25-14"><a href="#cb25-14" tabindex="-1"></a><span class="co"># Initialize with automatic orthology mapping</span></span>
+<span id="cb25-15"><a href="#cb25-15" tabindex="-1"></a><span class="fu">initPackRat</span>(</span>
+<span id="cb25-16"><a href="#cb25-16" tabindex="-1"></a>  <span class="at">data =</span> human_genes,</span>
+<span id="cb25-17"><a href="#cb25-17" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;gene&quot;</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;human&quot;</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;hg38&quot;</span>,</span>
+<span id="cb25-20"><a href="#cb25-20" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span>,</span>
+<span id="cb25-21"><a href="#cb25-21" tabindex="-1"></a>  <span class="at">force =</span> <span class="cn">TRUE</span></span>
+<span id="cb25-22"><a href="#cb25-22" tabindex="-1"></a>)</span>
+<span id="cb25-23"><a href="#cb25-23" tabindex="-1"></a><span class="co">#&gt; Initializing locusPackRat project...</span></span>
+<span id="cb25-24"><a href="#cb25-24" tabindex="-1"></a><span class="co">#&gt; Note: All data added to this project must use the hg38 genome build. Mixing genome builds will cause incorrect coordinate matching. Use rtracklayer::liftOver() to convert coordinates if needed.</span></span>
+<span id="cb25-25"><a href="#cb25-25" tabindex="-1"></a><span class="co">#&gt; Processing gene list...</span></span>
+<span id="cb25-26"><a href="#cb25-26" tabindex="-1"></a><span class="co">#&gt;   Matched all 18 genes to coordinates</span></span>
+<span id="cb25-27"><a href="#cb25-27" tabindex="-1"></a><span class="co">#&gt; Generating orthology information...</span></span>
+<span id="cb25-28"><a href="#cb25-28" tabindex="-1"></a><span class="co">#&gt; Saved gene data to cancer_genes/.locusPackRat/input/genes.csv</span></span>
+<span id="cb25-29"><a href="#cb25-29" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to cancer_genes/.locusPackRat/input/orthology.csv</span></span>
+<span id="cb25-30"><a href="#cb25-30" tabindex="-1"></a><span class="co">#&gt; Created config file: cancer_genes/.locusPackRat/config.json</span></span>
+<span id="cb25-31"><a href="#cb25-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-32"><a href="#cb25-32" tabindex="-1"></a><span class="co">#&gt; locusPackRat project initialized successfully!</span></span>
+<span id="cb25-33"><a href="#cb25-33" tabindex="-1"></a><span class="co">#&gt; Mode: gene | Species: human | Genome: hg38</span></span>
+<span id="cb25-34"><a href="#cb25-34" tabindex="-1"></a><span class="co">#&gt; Processed 18 genes</span></span>
+<span id="cb25-35"><a href="#cb25-35" tabindex="-1"></a></span>
+<span id="cb25-36"><a href="#cb25-36" tabindex="-1"></a><span class="co"># Add clinical significance data</span></span>
+<span id="cb25-37"><a href="#cb25-37" tabindex="-1"></a>clinical_data <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb25-38"><a href="#cb25-38" tabindex="-1"></a>  <span class="at">gene_symbol =</span> cancer_genes,</span>
+<span id="cb25-39"><a href="#cb25-39" tabindex="-1"></a>  <span class="at">pathogenicity =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">&quot;pathogenic&quot;</span>, <span class="st">&quot;likely_pathogenic&quot;</span>, <span class="st">&quot;VUS&quot;</span>),</span>
+<span id="cb25-40"><a href="#cb25-40" tabindex="-1"></a>                        <span class="fu">length</span>(cancer_genes), <span class="at">replace =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-41"><a href="#cb25-41" tabindex="-1"></a>                        <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">0.2</span>)),</span>
+<span id="cb25-42"><a href="#cb25-42" tabindex="-1"></a>  <span class="at">FDA_approved_drug =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>), <span class="fu">length</span>(cancer_genes),</span>
+<span id="cb25-43"><a href="#cb25-43" tabindex="-1"></a>                            <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.7</span>)),</span>
+<span id="cb25-44"><a href="#cb25-44" tabindex="-1"></a>  <span class="at">clinical_trials =</span> <span class="fu">sample</span>(<span class="dv">0</span><span class="sc">:</span><span class="dv">10</span>, <span class="fu">length</span>(cancer_genes), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb25-45"><a href="#cb25-45" tabindex="-1"></a>)</span>
+<span id="cb25-46"><a href="#cb25-46" tabindex="-1"></a></span>
+<span id="cb25-47"><a href="#cb25-47" tabindex="-1"></a><span class="fu">addRatTable</span>(</span>
+<span id="cb25-48"><a href="#cb25-48" tabindex="-1"></a>  <span class="at">data =</span> clinical_data,</span>
+<span id="cb25-49"><a href="#cb25-49" tabindex="-1"></a>  <span class="at">table_name =</span> <span class="st">&quot;clinical_significance&quot;</span>,</span>
+<span id="cb25-50"><a href="#cb25-50" tabindex="-1"></a>  <span class="at">link_type =</span> <span class="st">&quot;gene&quot;</span>,</span>
+<span id="cb25-51"><a href="#cb25-51" tabindex="-1"></a>  <span class="at">link_by =</span> <span class="st">&quot;gene_symbol&quot;</span>,</span>
+<span id="cb25-52"><a href="#cb25-52" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span></span>
+<span id="cb25-53"><a href="#cb25-53" tabindex="-1"></a>)</span>
+<span id="cb25-54"><a href="#cb25-54" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to human hg38 project...</span></span>
+<span id="cb25-55"><a href="#cb25-55" tabindex="-1"></a><span class="co">#&gt; Linking data by gene_symbol...</span></span>
+<span id="cb25-56"><a href="#cb25-56" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to cancer_genes/.locusPackRat/supplementary/clinical_significance.csv</span></span>
+<span id="cb25-57"><a href="#cb25-57" tabindex="-1"></a><span class="co">#&gt; Linked 18 of 18 input rows</span></span>
+<span id="cb25-58"><a href="#cb25-58" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span>
+<span id="cb25-59"><a href="#cb25-59" tabindex="-1"></a></span>
+<span id="cb25-60"><a href="#cb25-60" tabindex="-1"></a><span class="co"># Generate cross-species analysis workbook</span></span>
+<span id="cb25-61"><a href="#cb25-61" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
+<span id="cb25-62"><a href="#cb25-62" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;excel&quot;</span>,</span>
+<span id="cb25-63"><a href="#cb25-63" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;cancer_genes_analysis.xlsx&quot;</span>,</span>
+<span id="cb25-64"><a href="#cb25-64" tabindex="-1"></a>  <span class="at">split_by =</span> <span class="st">&quot;criteria&quot;</span>,</span>
+<span id="cb25-65"><a href="#cb25-65" tabindex="-1"></a>  <span class="at">split_criteria =</span> <span class="fu">list</span>(</span>
+<span id="cb25-66"><a href="#cb25-66" tabindex="-1"></a>    <span class="st">&quot;High_Frequency&quot;</span> <span class="ot">=</span> <span class="st">&quot;mutation_frequency &gt; 30&quot;</span>,</span>
+<span id="cb25-67"><a href="#cb25-67" tabindex="-1"></a>    <span class="st">&quot;FDA_Targets&quot;</span> <span class="ot">=</span> <span class="st">&quot;FDA_approved_drug == TRUE&quot;</span>,</span>
+<span id="cb25-68"><a href="#cb25-68" tabindex="-1"></a>    <span class="st">&quot;Breast_Cancer&quot;</span> <span class="ot">=</span> <span class="st">&quot;cancer_type == &#39;breast&#39;&quot;</span>,</span>
+<span id="cb25-69"><a href="#cb25-69" tabindex="-1"></a>    <span class="st">&quot;With_Mouse_Ortholog&quot;</span> <span class="ot">=</span> <span class="st">&quot;!is.na(mouse_gene_symbol)&quot;</span></span>
+<span id="cb25-70"><a href="#cb25-70" tabindex="-1"></a>  ),</span>
+<span id="cb25-71"><a href="#cb25-71" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb25-72"><a href="#cb25-72" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;cancer_genes&quot;</span></span>
+<span id="cb25-73"><a href="#cb25-73" tabindex="-1"></a>)</span>
+<span id="cb25-74"><a href="#cb25-74" tabindex="-1"></a><span class="co">#&gt; Generating gene sheet from cancer_genes/.locusPackRat...</span></span>
+<span id="cb25-75"><a href="#cb25-75" tabindex="-1"></a><span class="co">#&gt; Found 1 supplementary files: clinical_significance.csv</span></span>
+<span id="cb25-76"><a href="#cb25-76" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb25-77"><a href="#cb25-77" tabindex="-1"></a><span class="co">#&gt;   Linking clinical_significance (Exact Match: gene_symbol)</span></span>
+<span id="cb25-78"><a href="#cb25-78" tabindex="-1"></a><span class="co">#&gt; Saved Excel to cancer_genes/.locusPackRat/output/cancer_genes_analysis.xlsx</span></span></code></pre></div>
 </div>
 <div id="converting-between-genome-coordinates" class="section level2">
 <h2>Converting Between Genome Coordinates</h2>
@@ -1296,135 +1353,135 @@ newer build (e.g. mm39).</p>
 <p>Although LocusPackRat does not have a built-in function to accomodate
 other builds, the liftOver package, paired with chain files drawn from
 the UCSC genome browser, can easily do these conversions.</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">library</span>(liftOver)</span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>mm9_ncRNA <span class="ot">=</span> <span class="fu">read.csv</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;sample_mm9_ncRNA.csv&quot;</span>, <span class="at">package =</span> <span class="st">&quot;locusPackRat&quot;</span>))</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>chain <span class="ot">=</span> <span class="fu">import.chain</span>( <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mm9ToMm39.over.chain&quot;</span>, <span class="at">package =</span> <span class="st">&quot;locusPackRat&quot;</span>))</span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="co">#convert table to GRanges object.  Note that the chain files normally want</span></span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="co">#chromosomes in &#39;chr1&#39; format vs &#39;1&#39; format.  So you will need to convert.</span></span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>mm9_ncRNA<span class="sc">$</span>chr<span class="ot">=</span><span class="fu">paste0</span>(<span class="st">&quot;chr&quot;</span>,mm9_ncRNA<span class="sc">$</span>chr)</span>
-<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>mm9_ncRNA<span class="ot">=</span><span class="fu">makeGRangesFromDataFrame</span>(mm9_ncRNA,<span class="at">keep.extra.columns =</span> T)</span>
-<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a></span>
-<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>mm39_ncRNA<span class="ot">=</span><span class="fu">unlist</span>(<span class="fu">liftOver</span>(mm9_ncRNA,<span class="at">chain =</span> chain))</span>
-<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>mm39_ncRNA<span class="ot">=</span><span class="fu">as.data.frame</span>(mm39_ncRNA)</span>
-<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a>mm39_ncRNA<span class="sc">$</span>seqnames<span class="ot">=</span><span class="fu">gsub</span>(<span class="st">&quot;chr&quot;</span>,<span class="st">&quot;&quot;</span>,mm39_ncRNA<span class="sc">$</span>seqnames)</span>
-<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a></span>
-<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="co">#Your data are now ready to be added to a locusPackRat project</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">library</span>(liftOver)</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>mm9_ncRNA <span class="ot">=</span> <span class="fu">read.csv</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;sample_mm9_ncRNA.csv&quot;</span>, <span class="at">package =</span> <span class="st">&quot;locusPackRat&quot;</span>))</span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>chain <span class="ot">=</span> <span class="fu">import.chain</span>( <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mm9ToMm39.over.chain&quot;</span>, <span class="at">package =</span> <span class="st">&quot;locusPackRat&quot;</span>))</span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a><span class="co">#convert table to GRanges object.  Note that the chain files normally want</span></span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a><span class="co">#chromosomes in &#39;chr1&#39; format vs &#39;1&#39; format.  So you will need to convert.</span></span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>mm9_ncRNA<span class="sc">$</span>chr<span class="ot">=</span><span class="fu">paste0</span>(<span class="st">&quot;chr&quot;</span>,mm9_ncRNA<span class="sc">$</span>chr)</span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>mm9_ncRNA<span class="ot">=</span><span class="fu">makeGRangesFromDataFrame</span>(mm9_ncRNA,<span class="at">keep.extra.columns =</span> T)</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>mm39_ncRNA<span class="ot">=</span><span class="fu">unlist</span>(<span class="fu">liftOver</span>(mm9_ncRNA,<span class="at">chain =</span> chain))</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>mm39_ncRNA<span class="ot">=</span><span class="fu">as.data.frame</span>(mm39_ncRNA)</span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>mm39_ncRNA<span class="sc">$</span>seqnames<span class="ot">=</span><span class="fu">gsub</span>(<span class="st">&quot;chr&quot;</span>,<span class="st">&quot;&quot;</span>,mm39_ncRNA<span class="sc">$</span>seqnames)</span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a><span class="co">#Your data are now ready to be added to a locusPackRat project</span></span></code></pre></div>
 </div>
 </div>
 <div id="working-with-projects" class="section level1">
 <h1>Working with Projects</h1>
 <div id="list-available-tables" class="section level2">
 <h2>List Available Tables</h2>
-<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="co"># View supplementary tables in each project</span></span>
-<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">listPackRatTables</span>(<span class="st">&quot;rnaseq_analysis&quot;</span>, <span class="at">full_info =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="co">#&gt; Found 6 supplementary table(s):</span></span>
-<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="co">#&gt;   - mouse_phenotypes: 3592 rows with 7 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="co">#&gt;   - ot_constraints: 9 rows with 10 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="co">#&gt;   - ot_diseases: 389 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="co">#&gt;   - ot_tractability: 168 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="co">#&gt;   - pathway_annotations: 79 rows with 4 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="co">#&gt;   - tissue_expression: 150 rows with 10 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a><span class="co">#&gt; Printing full column names for 6 supplementary table(s)</span></span>
-<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a><span class="co">#&gt; Columns in tissue_expression:</span></span>
-<span id="cb24-12"><a href="#cb24-12" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; brain ; liver ; heart ; kidney ; lung ; muscle ; max_tissue ; tissue_specific</span></span>
-<span id="cb24-13"><a href="#cb24-13" tabindex="-1"></a><span class="co">#&gt; Columns in pathway_annotations:</span></span>
-<span id="cb24-14"><a href="#cb24-14" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; pathway ; evidence</span></span>
-<span id="cb24-15"><a href="#cb24-15" tabindex="-1"></a><span class="co">#&gt; Columns in mouse_phenotypes:</span></span>
-<span id="cb24-16"><a href="#cb24-16" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; mgi_id ; mp_id ; phenotype ; pubmed_id ; description</span></span>
-<span id="cb24-17"><a href="#cb24-17" tabindex="-1"></a><span class="co">#&gt; Columns in ot_diseases:</span></span>
-<span id="cb24-18"><a href="#cb24-18" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; disease_id ; disease_name ; score</span></span>
-<span id="cb24-19"><a href="#cb24-19" tabindex="-1"></a><span class="co">#&gt; Columns in ot_constraints:</span></span>
-<span id="cb24-20"><a href="#cb24-20" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; constraintType ; exp ; obs ; score ; oe ; oeLower ; oeUpper</span></span>
-<span id="cb24-21"><a href="#cb24-21" tabindex="-1"></a><span class="co">#&gt; Columns in ot_tractability:</span></span>
-<span id="cb24-22"><a href="#cb24-22" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; label ; modality ; value</span></span>
-<span id="cb24-23"><a href="#cb24-23" tabindex="-1"></a><span class="co">#&gt; Completed</span></span>
-<span id="cb24-24"><a href="#cb24-24" tabindex="-1"></a><span class="co">#&gt;             table_name table_abbr link_type     link_by n_rows n_cols</span></span>
-<span id="cb24-25"><a href="#cb24-25" tabindex="-1"></a><span class="co">#&gt;                 &lt;char&gt;     &lt;char&gt;    &lt;char&gt;      &lt;char&gt;  &lt;int&gt;  &lt;int&gt;</span></span>
-<span id="cb24-26"><a href="#cb24-26" tabindex="-1"></a><span class="co">#&gt; 1:    mouse_phenotypes         mm      gene gene_symbol   3592      7</span></span>
-<span id="cb24-27"><a href="#cb24-27" tabindex="-1"></a><span class="co">#&gt; 2:      ot_constraints        otc      gene gene_symbol      9     10</span></span>
-<span id="cb24-28"><a href="#cb24-28" tabindex="-1"></a><span class="co">#&gt; 3:         ot_diseases        otd      gene gene_symbol    389      6</span></span>
-<span id="cb24-29"><a href="#cb24-29" tabindex="-1"></a><span class="co">#&gt; 4:     ot_tractability        ott      gene gene_symbol    168      6</span></span>
-<span id="cb24-30"><a href="#cb24-30" tabindex="-1"></a><span class="co">#&gt; 5: pathway_annotations       &lt;NA&gt;      gene gene_symbol     79      4</span></span>
-<span id="cb24-31"><a href="#cb24-31" tabindex="-1"></a><span class="co">#&gt; 6:   tissue_expression         te      gene gene_symbol    150     10</span></span>
-<span id="cb24-32"><a href="#cb24-32" tabindex="-1"></a><span class="co">#&gt;    date_added</span></span>
-<span id="cb24-33"><a href="#cb24-33" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt;</span></span>
-<span id="cb24-34"><a href="#cb24-34" tabindex="-1"></a><span class="co">#&gt; 1: 2026-02-18</span></span>
-<span id="cb24-35"><a href="#cb24-35" tabindex="-1"></a><span class="co">#&gt; 2: 2026-02-18</span></span>
-<span id="cb24-36"><a href="#cb24-36" tabindex="-1"></a><span class="co">#&gt; 3: 2026-02-18</span></span>
-<span id="cb24-37"><a href="#cb24-37" tabindex="-1"></a><span class="co">#&gt; 4: 2026-02-18</span></span>
-<span id="cb24-38"><a href="#cb24-38" tabindex="-1"></a><span class="co">#&gt; 5: 2026-02-18</span></span>
-<span id="cb24-39"><a href="#cb24-39" tabindex="-1"></a><span class="co">#&gt; 6: 2026-02-18</span></span>
-<span id="cb24-40"><a href="#cb24-40" tabindex="-1"></a><span class="fu">listPackRatTables</span>(<span class="st">&quot;atacseq_analysis&quot;</span>, <span class="at">full_info =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb24-41"><a href="#cb24-41" tabindex="-1"></a><span class="co">#&gt; Found 7 supplementary table(s):</span></span>
-<span id="cb24-42"><a href="#cb24-42" tabindex="-1"></a><span class="co">#&gt;   - chromatin_states: 200 rows with 5 cols, linked by &#39;chr,start,end&#39;</span></span>
-<span id="cb24-43"><a href="#cb24-43" tabindex="-1"></a><span class="co">#&gt;   - differential_accessibility: 200 rows with 9 cols, linked by &#39;chr,start,end&#39;</span></span>
-<span id="cb24-44"><a href="#cb24-44" tabindex="-1"></a><span class="co">#&gt;   - mouse_phenotypes: 1404 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-45"><a href="#cb24-45" tabindex="-1"></a><span class="co">#&gt;   - ot_constraints: 45 rows with 9 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-46"><a href="#cb24-46" tabindex="-1"></a><span class="co">#&gt;   - ot_diseases: 3192 rows with 5 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-47"><a href="#cb24-47" tabindex="-1"></a><span class="co">#&gt;   - ot_tractability: 420 rows with 5 cols, linked by &#39;gene_symbol&#39;</span></span>
-<span id="cb24-48"><a href="#cb24-48" tabindex="-1"></a><span class="co">#&gt;   - tf_motifs: 150 rows with 6 cols, linked by &#39;chr,start,end&#39;</span></span>
-<span id="cb24-49"><a href="#cb24-49" tabindex="-1"></a><span class="co">#&gt;                    table_name table_abbr link_type       link_by n_rows n_cols</span></span>
-<span id="cb24-50"><a href="#cb24-50" tabindex="-1"></a><span class="co">#&gt;                        &lt;char&gt;     &lt;char&gt;    &lt;char&gt;        &lt;char&gt;  &lt;int&gt;  &lt;int&gt;</span></span>
-<span id="cb24-51"><a href="#cb24-51" tabindex="-1"></a><span class="co">#&gt; 1:           chromatin_states         cs    region chr,start,end    200      5</span></span>
-<span id="cb24-52"><a href="#cb24-52" tabindex="-1"></a><span class="co">#&gt; 2: differential_accessibility         da    region chr,start,end    200      9</span></span>
-<span id="cb24-53"><a href="#cb24-53" tabindex="-1"></a><span class="co">#&gt; 3:           mouse_phenotypes         mm      gene   gene_symbol   1404      6</span></span>
-<span id="cb24-54"><a href="#cb24-54" tabindex="-1"></a><span class="co">#&gt; 4:             ot_constraints        otc      gene   gene_symbol     45      9</span></span>
-<span id="cb24-55"><a href="#cb24-55" tabindex="-1"></a><span class="co">#&gt; 5:                ot_diseases        otd      gene   gene_symbol   3192      5</span></span>
-<span id="cb24-56"><a href="#cb24-56" tabindex="-1"></a><span class="co">#&gt; 6:            ot_tractability        ott      gene   gene_symbol    420      5</span></span>
-<span id="cb24-57"><a href="#cb24-57" tabindex="-1"></a><span class="co">#&gt; 7:                  tf_motifs  tf_motifs    region chr,start,end    150      6</span></span>
-<span id="cb24-58"><a href="#cb24-58" tabindex="-1"></a><span class="co">#&gt;    date_added</span></span>
-<span id="cb24-59"><a href="#cb24-59" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt;</span></span>
-<span id="cb24-60"><a href="#cb24-60" tabindex="-1"></a><span class="co">#&gt; 1: 2026-02-18</span></span>
-<span id="cb24-61"><a href="#cb24-61" tabindex="-1"></a><span class="co">#&gt; 2: 2026-02-18</span></span>
-<span id="cb24-62"><a href="#cb24-62" tabindex="-1"></a><span class="co">#&gt; 3: 2026-02-18</span></span>
-<span id="cb24-63"><a href="#cb24-63" tabindex="-1"></a><span class="co">#&gt; 4: 2026-02-18</span></span>
-<span id="cb24-64"><a href="#cb24-64" tabindex="-1"></a><span class="co">#&gt; 5: 2026-02-18</span></span>
-<span id="cb24-65"><a href="#cb24-65" tabindex="-1"></a><span class="co">#&gt; 6: 2026-02-18</span></span>
-<span id="cb24-66"><a href="#cb24-66" tabindex="-1"></a><span class="co">#&gt; 7: 2026-02-18</span></span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="co"># View supplementary tables in each project</span></span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">listPackRatTables</span>(<span class="st">&quot;rnaseq_analysis&quot;</span>, <span class="at">full_info =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a><span class="co">#&gt; Found 6 supplementary table(s):</span></span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a><span class="co">#&gt;   - mouse_phenotypes: 3592 rows with 7 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a><span class="co">#&gt;   - ot_constraints: 9 rows with 10 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a><span class="co">#&gt;   - ot_diseases: 389 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a><span class="co">#&gt;   - ot_tractability: 168 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a><span class="co">#&gt;   - pathway_annotations: 79 rows with 4 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a><span class="co">#&gt;   - tissue_expression: 150 rows with 10 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a><span class="co">#&gt; Printing full column names for 6 supplementary table(s)</span></span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a><span class="co">#&gt; Columns in tissue_expression:</span></span>
+<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; brain ; liver ; heart ; kidney ; lung ; muscle ; max_tissue ; tissue_specific</span></span>
+<span id="cb27-13"><a href="#cb27-13" tabindex="-1"></a><span class="co">#&gt; Columns in pathway_annotations:</span></span>
+<span id="cb27-14"><a href="#cb27-14" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; pathway ; evidence</span></span>
+<span id="cb27-15"><a href="#cb27-15" tabindex="-1"></a><span class="co">#&gt; Columns in mouse_phenotypes:</span></span>
+<span id="cb27-16"><a href="#cb27-16" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; mgi_id ; mp_id ; phenotype ; pubmed_id ; description</span></span>
+<span id="cb27-17"><a href="#cb27-17" tabindex="-1"></a><span class="co">#&gt; Columns in ot_diseases:</span></span>
+<span id="cb27-18"><a href="#cb27-18" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; disease_id ; disease_name ; score</span></span>
+<span id="cb27-19"><a href="#cb27-19" tabindex="-1"></a><span class="co">#&gt; Columns in ot_constraints:</span></span>
+<span id="cb27-20"><a href="#cb27-20" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; constraintType ; exp ; obs ; score ; oe ; oeLower ; oeUpper</span></span>
+<span id="cb27-21"><a href="#cb27-21" tabindex="-1"></a><span class="co">#&gt; Columns in ot_tractability:</span></span>
+<span id="cb27-22"><a href="#cb27-22" tabindex="-1"></a><span class="co">#&gt; gene_symbol ; ensembl_id ; human_ensembl_id ; label ; modality ; value</span></span>
+<span id="cb27-23"><a href="#cb27-23" tabindex="-1"></a><span class="co">#&gt; Completed</span></span>
+<span id="cb27-24"><a href="#cb27-24" tabindex="-1"></a><span class="co">#&gt;             table_name table_abbr link_type     link_by n_rows n_cols</span></span>
+<span id="cb27-25"><a href="#cb27-25" tabindex="-1"></a><span class="co">#&gt;                 &lt;char&gt;     &lt;char&gt;    &lt;char&gt;      &lt;char&gt;  &lt;int&gt;  &lt;int&gt;</span></span>
+<span id="cb27-26"><a href="#cb27-26" tabindex="-1"></a><span class="co">#&gt; 1:    mouse_phenotypes         mm      gene gene_symbol   3592      7</span></span>
+<span id="cb27-27"><a href="#cb27-27" tabindex="-1"></a><span class="co">#&gt; 2:      ot_constraints        otc      gene gene_symbol      9     10</span></span>
+<span id="cb27-28"><a href="#cb27-28" tabindex="-1"></a><span class="co">#&gt; 3:         ot_diseases        otd      gene gene_symbol    389      6</span></span>
+<span id="cb27-29"><a href="#cb27-29" tabindex="-1"></a><span class="co">#&gt; 4:     ot_tractability        ott      gene gene_symbol    168      6</span></span>
+<span id="cb27-30"><a href="#cb27-30" tabindex="-1"></a><span class="co">#&gt; 5: pathway_annotations       &lt;NA&gt;      gene gene_symbol     79      4</span></span>
+<span id="cb27-31"><a href="#cb27-31" tabindex="-1"></a><span class="co">#&gt; 6:   tissue_expression         te      gene gene_symbol    150     10</span></span>
+<span id="cb27-32"><a href="#cb27-32" tabindex="-1"></a><span class="co">#&gt;    date_added</span></span>
+<span id="cb27-33"><a href="#cb27-33" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt;</span></span>
+<span id="cb27-34"><a href="#cb27-34" tabindex="-1"></a><span class="co">#&gt; 1: 2026-02-18</span></span>
+<span id="cb27-35"><a href="#cb27-35" tabindex="-1"></a><span class="co">#&gt; 2: 2026-02-18</span></span>
+<span id="cb27-36"><a href="#cb27-36" tabindex="-1"></a><span class="co">#&gt; 3: 2026-02-18</span></span>
+<span id="cb27-37"><a href="#cb27-37" tabindex="-1"></a><span class="co">#&gt; 4: 2026-02-18</span></span>
+<span id="cb27-38"><a href="#cb27-38" tabindex="-1"></a><span class="co">#&gt; 5: 2026-02-18</span></span>
+<span id="cb27-39"><a href="#cb27-39" tabindex="-1"></a><span class="co">#&gt; 6: 2026-02-18</span></span>
+<span id="cb27-40"><a href="#cb27-40" tabindex="-1"></a><span class="fu">listPackRatTables</span>(<span class="st">&quot;atacseq_analysis&quot;</span>, <span class="at">full_info =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb27-41"><a href="#cb27-41" tabindex="-1"></a><span class="co">#&gt; Found 7 supplementary table(s):</span></span>
+<span id="cb27-42"><a href="#cb27-42" tabindex="-1"></a><span class="co">#&gt;   - chromatin_states: 200 rows with 5 cols, linked by &#39;chr,start,end&#39;</span></span>
+<span id="cb27-43"><a href="#cb27-43" tabindex="-1"></a><span class="co">#&gt;   - differential_accessibility: 200 rows with 9 cols, linked by &#39;chr,start,end&#39;</span></span>
+<span id="cb27-44"><a href="#cb27-44" tabindex="-1"></a><span class="co">#&gt;   - mouse_phenotypes: 1404 rows with 6 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-45"><a href="#cb27-45" tabindex="-1"></a><span class="co">#&gt;   - ot_constraints: 45 rows with 9 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-46"><a href="#cb27-46" tabindex="-1"></a><span class="co">#&gt;   - ot_diseases: 3192 rows with 5 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-47"><a href="#cb27-47" tabindex="-1"></a><span class="co">#&gt;   - ot_tractability: 420 rows with 5 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb27-48"><a href="#cb27-48" tabindex="-1"></a><span class="co">#&gt;   - tf_motifs: 150 rows with 6 cols, linked by &#39;chr,start,end&#39;</span></span>
+<span id="cb27-49"><a href="#cb27-49" tabindex="-1"></a><span class="co">#&gt;                    table_name table_abbr link_type       link_by n_rows n_cols</span></span>
+<span id="cb27-50"><a href="#cb27-50" tabindex="-1"></a><span class="co">#&gt;                        &lt;char&gt;     &lt;char&gt;    &lt;char&gt;        &lt;char&gt;  &lt;int&gt;  &lt;int&gt;</span></span>
+<span id="cb27-51"><a href="#cb27-51" tabindex="-1"></a><span class="co">#&gt; 1:           chromatin_states         cs    region chr,start,end    200      5</span></span>
+<span id="cb27-52"><a href="#cb27-52" tabindex="-1"></a><span class="co">#&gt; 2: differential_accessibility         da    region chr,start,end    200      9</span></span>
+<span id="cb27-53"><a href="#cb27-53" tabindex="-1"></a><span class="co">#&gt; 3:           mouse_phenotypes         mm      gene   gene_symbol   1404      6</span></span>
+<span id="cb27-54"><a href="#cb27-54" tabindex="-1"></a><span class="co">#&gt; 4:             ot_constraints        otc      gene   gene_symbol     45      9</span></span>
+<span id="cb27-55"><a href="#cb27-55" tabindex="-1"></a><span class="co">#&gt; 5:                ot_diseases        otd      gene   gene_symbol   3192      5</span></span>
+<span id="cb27-56"><a href="#cb27-56" tabindex="-1"></a><span class="co">#&gt; 6:            ot_tractability        ott      gene   gene_symbol    420      5</span></span>
+<span id="cb27-57"><a href="#cb27-57" tabindex="-1"></a><span class="co">#&gt; 7:                  tf_motifs  tf_motifs    region chr,start,end    150      6</span></span>
+<span id="cb27-58"><a href="#cb27-58" tabindex="-1"></a><span class="co">#&gt;    date_added</span></span>
+<span id="cb27-59"><a href="#cb27-59" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt;</span></span>
+<span id="cb27-60"><a href="#cb27-60" tabindex="-1"></a><span class="co">#&gt; 1: 2026-02-18</span></span>
+<span id="cb27-61"><a href="#cb27-61" tabindex="-1"></a><span class="co">#&gt; 2: 2026-02-18</span></span>
+<span id="cb27-62"><a href="#cb27-62" tabindex="-1"></a><span class="co">#&gt; 3: 2026-02-18</span></span>
+<span id="cb27-63"><a href="#cb27-63" tabindex="-1"></a><span class="co">#&gt; 4: 2026-02-18</span></span>
+<span id="cb27-64"><a href="#cb27-64" tabindex="-1"></a><span class="co">#&gt; 5: 2026-02-18</span></span>
+<span id="cb27-65"><a href="#cb27-65" tabindex="-1"></a><span class="co">#&gt; 6: 2026-02-18</span></span>
+<span id="cb27-66"><a href="#cb27-66" tabindex="-1"></a><span class="co">#&gt; 7: 2026-02-18</span></span></code></pre></div>
 </div>
 <div id="remove-a-table" class="section level2">
 <h2>Remove a Table</h2>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a></span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">removeRatTable</span>(<span class="st">&quot;chromatin_states&quot;</span>, <span class="at">project_dir =</span> <span class="st">&quot;atacseq_analysis&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a></span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a><span class="fu">removeRatTable</span>(<span class="st">&quot;chromatin_states&quot;</span>, <span class="at">project_dir =</span> <span class="st">&quot;atacseq_analysis&quot;</span>)</span></code></pre></div>
 </div>
 <div id="project-configuration" class="section level2">
 <h2>Project Configuration</h2>
 <p>Each project contains a <code>config.json</code> file with project
 metadata:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="co"># Load project configuration</span></span>
-<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a>config <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">read_json</span>(<span class="st">&quot;rnaseq_analysis/.locusPackRat/config.json&quot;</span>)</span>
-<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a><span class="fu">str</span>(config)</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="co"># Load project configuration</span></span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>config <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">read_json</span>(<span class="st">&quot;rnaseq_analysis/.locusPackRat/config.json&quot;</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a><span class="fu">str</span>(config)</span></code></pre></div>
 </div>
 <div id="output-options" class="section level2">
 <h2>Output Options</h2>
 <div id="csv-format" class="section level3">
 <h3>CSV Format</h3>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
-<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;csv&quot;</span>,</span>
-<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;results.csv&quot;</span>,</span>
-<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
-<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;csv&quot;</span>,</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;results.csv&quot;</span>,</span>
+<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
+<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="filtered-output" class="section level3">
 <h3>Filtered Output</h3>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
-<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;csv&quot;</span>,</span>
-<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;significant_genes.csv&quot;</span>,</span>
-<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>  <span class="at">filter_expr =</span> <span class="st">&quot;padj &lt; 0.05 &amp; abs(log2FC) &gt; 1&quot;</span>,</span>
-<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
-<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;csv&quot;</span>,</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;significant_genes.csv&quot;</span>,</span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a>  <span class="at">filter_expr =</span> <span class="st">&quot;padj &lt; 0.05 &amp; abs(log2FC) &gt; 1&quot;</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="selective-table-inclusion" class="section level3">
 <h3>Selective Table Inclusion</h3>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
-<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;excel&quot;</span>,</span>
-<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;selected_data.xlsx&quot;</span>,</span>
-<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="fu">c</span>(<span class="st">&quot;tissue_expression&quot;</span>, <span class="st">&quot;pathway_annotations&quot;</span>),</span>
-<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
-<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">makeGeneSheet</span>(</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;excel&quot;</span>,</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>  <span class="at">output_file =</span> <span class="st">&quot;selected_data.xlsx&quot;</span>,</span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>  <span class="at">include_supplementary =</span> <span class="fu">c</span>(<span class="st">&quot;tissue_expression&quot;</span>, <span class="st">&quot;pathway_annotations&quot;</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;rnaseq_analysis&quot;</span></span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 </div>
 </div>
@@ -1434,187 +1491,187 @@ metadata:</p>
 build (e.g., mm39, hg38). If you have data in a different build, use
 <code>rtracklayer::liftOver()</code> to convert coordinates before
 adding them to the project.</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="co"># Example: Convert mm10 coordinates to mm39</span></span>
-<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
-<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
-<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a></span>
-<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a><span class="co"># Load a chain file for the conversion</span></span>
-<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a><span class="co"># Chain files are available from UCSC:</span></span>
-<span id="cb30-7"><a href="#cb30-7" tabindex="-1"></a><span class="co"># https://hgdownload.cse.ucsc.edu/goldenpath/mm10/liftOver/mm10ToMm39.over.chain.gz</span></span>
-<span id="cb30-8"><a href="#cb30-8" tabindex="-1"></a>chain <span class="ot">&lt;-</span> <span class="fu">import.chain</span>(<span class="st">&quot;mm10ToMm39.over.chain&quot;</span>)</span>
-<span id="cb30-9"><a href="#cb30-9" tabindex="-1"></a></span>
-<span id="cb30-10"><a href="#cb30-10" tabindex="-1"></a><span class="co"># Create a GRanges object from your data</span></span>
-<span id="cb30-11"><a href="#cb30-11" tabindex="-1"></a><span class="co"># Suppose you have eQTL data in mm10 coordinates</span></span>
-<span id="cb30-12"><a href="#cb30-12" tabindex="-1"></a>eqtl_mm10 <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb30-13"><a href="#cb30-13" tabindex="-1"></a>  <span class="at">chr =</span> <span class="fu">c</span>(<span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr3&quot;</span>),</span>
-<span id="cb30-14"><a href="#cb30-14" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">131000000</span>, <span class="dv">135000000</span>, <span class="dv">142000000</span>),</span>
-<span id="cb30-15"><a href="#cb30-15" tabindex="-1"></a>  <span class="at">end =</span> <span class="fu">c</span>(<span class="dv">131001000</span>, <span class="dv">135001000</span>, <span class="dv">142001000</span>),</span>
-<span id="cb30-16"><a href="#cb30-16" tabindex="-1"></a>  <span class="at">gene =</span> <span class="fu">c</span>(<span class="st">&quot;Cisd2&quot;</span>, <span class="st">&quot;Manba&quot;</span>, <span class="st">&quot;Pdlim5&quot;</span>),</span>
-<span id="cb30-17"><a href="#cb30-17" tabindex="-1"></a>  <span class="at">lod =</span> <span class="fu">c</span>(<span class="fl">5.2</span>, <span class="fl">4.8</span>, <span class="fl">3.1</span>)</span>
-<span id="cb30-18"><a href="#cb30-18" tabindex="-1"></a>)</span>
-<span id="cb30-19"><a href="#cb30-19" tabindex="-1"></a></span>
-<span id="cb30-20"><a href="#cb30-20" tabindex="-1"></a>gr_mm10 <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
-<span id="cb30-21"><a href="#cb30-21" tabindex="-1"></a>  <span class="at">seqnames =</span> eqtl_mm10<span class="sc">$</span>chr,</span>
-<span id="cb30-22"><a href="#cb30-22" tabindex="-1"></a>  <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="at">start =</span> eqtl_mm10<span class="sc">$</span>start, <span class="at">end =</span> eqtl_mm10<span class="sc">$</span>end),</span>
-<span id="cb30-23"><a href="#cb30-23" tabindex="-1"></a>  <span class="at">gene =</span> eqtl_mm10<span class="sc">$</span>gene,</span>
-<span id="cb30-24"><a href="#cb30-24" tabindex="-1"></a>  <span class="at">lod =</span> eqtl_mm10<span class="sc">$</span>lod</span>
-<span id="cb30-25"><a href="#cb30-25" tabindex="-1"></a>)</span>
-<span id="cb30-26"><a href="#cb30-26" tabindex="-1"></a></span>
-<span id="cb30-27"><a href="#cb30-27" tabindex="-1"></a><span class="co"># Perform liftOver</span></span>
-<span id="cb30-28"><a href="#cb30-28" tabindex="-1"></a>gr_mm39 <span class="ot">&lt;-</span> <span class="fu">liftOver</span>(gr_mm10, chain)</span>
-<span id="cb30-29"><a href="#cb30-29" tabindex="-1"></a></span>
-<span id="cb30-30"><a href="#cb30-30" tabindex="-1"></a><span class="co"># Convert back to data.table — liftOver returns a GRangesList</span></span>
-<span id="cb30-31"><a href="#cb30-31" tabindex="-1"></a><span class="co"># (one element per input range, since some ranges may map to multiple locations)</span></span>
-<span id="cb30-32"><a href="#cb30-32" tabindex="-1"></a>gr_mm39_unlisted <span class="ot">&lt;-</span> <span class="fu">unlist</span>(gr_mm39)</span>
-<span id="cb30-33"><a href="#cb30-33" tabindex="-1"></a></span>
-<span id="cb30-34"><a href="#cb30-34" tabindex="-1"></a>eqtl_mm39 <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
-<span id="cb30-35"><a href="#cb30-35" tabindex="-1"></a>  <span class="at">chr =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(gr_mm39_unlisted)),</span>
-<span id="cb30-36"><a href="#cb30-36" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">start</span>(gr_mm39_unlisted),</span>
-<span id="cb30-37"><a href="#cb30-37" tabindex="-1"></a>  <span class="at">end =</span> <span class="fu">end</span>(gr_mm39_unlisted),</span>
-<span id="cb30-38"><a href="#cb30-38" tabindex="-1"></a>  <span class="at">gene =</span> gr_mm39_unlisted<span class="sc">$</span>gene,</span>
-<span id="cb30-39"><a href="#cb30-39" tabindex="-1"></a>  <span class="at">lod =</span> gr_mm39_unlisted<span class="sc">$</span>lod</span>
-<span id="cb30-40"><a href="#cb30-40" tabindex="-1"></a>)</span>
-<span id="cb30-41"><a href="#cb30-41" tabindex="-1"></a></span>
-<span id="cb30-42"><a href="#cb30-42" tabindex="-1"></a><span class="co"># Remove &quot;chr&quot; prefix if your project uses UCSC-style names without it</span></span>
-<span id="cb30-43"><a href="#cb30-43" tabindex="-1"></a>eqtl_mm39[, chr <span class="sc">:=</span> <span class="fu">gsub</span>(<span class="st">&quot;^chr&quot;</span>, <span class="st">&quot;&quot;</span>, chr)]</span>
-<span id="cb30-44"><a href="#cb30-44" tabindex="-1"></a></span>
-<span id="cb30-45"><a href="#cb30-45" tabindex="-1"></a><span class="co"># Now add to your mm39 locusPackRat project</span></span>
-<span id="cb30-46"><a href="#cb30-46" tabindex="-1"></a><span class="fu">addRatTable</span>(</span>
-<span id="cb30-47"><a href="#cb30-47" tabindex="-1"></a>  <span class="at">data =</span> eqtl_mm39,</span>
-<span id="cb30-48"><a href="#cb30-48" tabindex="-1"></a>  <span class="at">table_name =</span> <span class="st">&quot;eqtl_lifted&quot;</span>,</span>
-<span id="cb30-49"><a href="#cb30-49" tabindex="-1"></a>  <span class="at">abbreviation =</span> <span class="st">&quot;eql&quot;</span>,</span>
-<span id="cb30-50"><a href="#cb30-50" tabindex="-1"></a>  <span class="at">link_type =</span> <span class="st">&quot;region&quot;</span>,</span>
-<span id="cb30-51"><a href="#cb30-51" tabindex="-1"></a>  <span class="at">link_by =</span> <span class="st">&quot;chr,start,end&quot;</span>,</span>
-<span id="cb30-52"><a href="#cb30-52" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;qtl_analysis&quot;</span></span>
-<span id="cb30-53"><a href="#cb30-53" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a><span class="co"># Example: Convert mm10 coordinates to mm39</span></span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a></span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a><span class="co"># Load a chain file for the conversion</span></span>
+<span id="cb33-6"><a href="#cb33-6" tabindex="-1"></a><span class="co"># Chain files are available from UCSC:</span></span>
+<span id="cb33-7"><a href="#cb33-7" tabindex="-1"></a><span class="co"># https://hgdownload.cse.ucsc.edu/goldenpath/mm10/liftOver/mm10ToMm39.over.chain.gz</span></span>
+<span id="cb33-8"><a href="#cb33-8" tabindex="-1"></a>chain <span class="ot">&lt;-</span> <span class="fu">import.chain</span>(<span class="st">&quot;mm10ToMm39.over.chain&quot;</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" tabindex="-1"></a></span>
+<span id="cb33-10"><a href="#cb33-10" tabindex="-1"></a><span class="co"># Create a GRanges object from your data</span></span>
+<span id="cb33-11"><a href="#cb33-11" tabindex="-1"></a><span class="co"># Suppose you have eQTL data in mm10 coordinates</span></span>
+<span id="cb33-12"><a href="#cb33-12" tabindex="-1"></a>eqtl_mm10 <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb33-13"><a href="#cb33-13" tabindex="-1"></a>  <span class="at">chr =</span> <span class="fu">c</span>(<span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr3&quot;</span>, <span class="st">&quot;chr3&quot;</span>),</span>
+<span id="cb33-14"><a href="#cb33-14" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">131000000</span>, <span class="dv">135000000</span>, <span class="dv">142000000</span>),</span>
+<span id="cb33-15"><a href="#cb33-15" tabindex="-1"></a>  <span class="at">end =</span> <span class="fu">c</span>(<span class="dv">131001000</span>, <span class="dv">135001000</span>, <span class="dv">142001000</span>),</span>
+<span id="cb33-16"><a href="#cb33-16" tabindex="-1"></a>  <span class="at">gene =</span> <span class="fu">c</span>(<span class="st">&quot;Cisd2&quot;</span>, <span class="st">&quot;Manba&quot;</span>, <span class="st">&quot;Pdlim5&quot;</span>),</span>
+<span id="cb33-17"><a href="#cb33-17" tabindex="-1"></a>  <span class="at">lod =</span> <span class="fu">c</span>(<span class="fl">5.2</span>, <span class="fl">4.8</span>, <span class="fl">3.1</span>)</span>
+<span id="cb33-18"><a href="#cb33-18" tabindex="-1"></a>)</span>
+<span id="cb33-19"><a href="#cb33-19" tabindex="-1"></a></span>
+<span id="cb33-20"><a href="#cb33-20" tabindex="-1"></a>gr_mm10 <span class="ot">&lt;-</span> <span class="fu">GRanges</span>(</span>
+<span id="cb33-21"><a href="#cb33-21" tabindex="-1"></a>  <span class="at">seqnames =</span> eqtl_mm10<span class="sc">$</span>chr,</span>
+<span id="cb33-22"><a href="#cb33-22" tabindex="-1"></a>  <span class="at">ranges =</span> <span class="fu">IRanges</span>(<span class="at">start =</span> eqtl_mm10<span class="sc">$</span>start, <span class="at">end =</span> eqtl_mm10<span class="sc">$</span>end),</span>
+<span id="cb33-23"><a href="#cb33-23" tabindex="-1"></a>  <span class="at">gene =</span> eqtl_mm10<span class="sc">$</span>gene,</span>
+<span id="cb33-24"><a href="#cb33-24" tabindex="-1"></a>  <span class="at">lod =</span> eqtl_mm10<span class="sc">$</span>lod</span>
+<span id="cb33-25"><a href="#cb33-25" tabindex="-1"></a>)</span>
+<span id="cb33-26"><a href="#cb33-26" tabindex="-1"></a></span>
+<span id="cb33-27"><a href="#cb33-27" tabindex="-1"></a><span class="co"># Perform liftOver</span></span>
+<span id="cb33-28"><a href="#cb33-28" tabindex="-1"></a>gr_mm39 <span class="ot">&lt;-</span> <span class="fu">liftOver</span>(gr_mm10, chain)</span>
+<span id="cb33-29"><a href="#cb33-29" tabindex="-1"></a></span>
+<span id="cb33-30"><a href="#cb33-30" tabindex="-1"></a><span class="co"># Convert back to data.table — liftOver returns a GRangesList</span></span>
+<span id="cb33-31"><a href="#cb33-31" tabindex="-1"></a><span class="co"># (one element per input range, since some ranges may map to multiple locations)</span></span>
+<span id="cb33-32"><a href="#cb33-32" tabindex="-1"></a>gr_mm39_unlisted <span class="ot">&lt;-</span> <span class="fu">unlist</span>(gr_mm39)</span>
+<span id="cb33-33"><a href="#cb33-33" tabindex="-1"></a></span>
+<span id="cb33-34"><a href="#cb33-34" tabindex="-1"></a>eqtl_mm39 <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb33-35"><a href="#cb33-35" tabindex="-1"></a>  <span class="at">chr =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(gr_mm39_unlisted)),</span>
+<span id="cb33-36"><a href="#cb33-36" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">start</span>(gr_mm39_unlisted),</span>
+<span id="cb33-37"><a href="#cb33-37" tabindex="-1"></a>  <span class="at">end =</span> <span class="fu">end</span>(gr_mm39_unlisted),</span>
+<span id="cb33-38"><a href="#cb33-38" tabindex="-1"></a>  <span class="at">gene =</span> gr_mm39_unlisted<span class="sc">$</span>gene,</span>
+<span id="cb33-39"><a href="#cb33-39" tabindex="-1"></a>  <span class="at">lod =</span> gr_mm39_unlisted<span class="sc">$</span>lod</span>
+<span id="cb33-40"><a href="#cb33-40" tabindex="-1"></a>)</span>
+<span id="cb33-41"><a href="#cb33-41" tabindex="-1"></a></span>
+<span id="cb33-42"><a href="#cb33-42" tabindex="-1"></a><span class="co"># Remove &quot;chr&quot; prefix if your project uses UCSC-style names without it</span></span>
+<span id="cb33-43"><a href="#cb33-43" tabindex="-1"></a>eqtl_mm39[, chr <span class="sc">:=</span> <span class="fu">gsub</span>(<span class="st">&quot;^chr&quot;</span>, <span class="st">&quot;&quot;</span>, chr)]</span>
+<span id="cb33-44"><a href="#cb33-44" tabindex="-1"></a></span>
+<span id="cb33-45"><a href="#cb33-45" tabindex="-1"></a><span class="co"># Now add to your mm39 locusPackRat project</span></span>
+<span id="cb33-46"><a href="#cb33-46" tabindex="-1"></a><span class="fu">addRatTable</span>(</span>
+<span id="cb33-47"><a href="#cb33-47" tabindex="-1"></a>  <span class="at">data =</span> eqtl_mm39,</span>
+<span id="cb33-48"><a href="#cb33-48" tabindex="-1"></a>  <span class="at">table_name =</span> <span class="st">&quot;eqtl_lifted&quot;</span>,</span>
+<span id="cb33-49"><a href="#cb33-49" tabindex="-1"></a>  <span class="at">abbreviation =</span> <span class="st">&quot;eql&quot;</span>,</span>
+<span id="cb33-50"><a href="#cb33-50" tabindex="-1"></a>  <span class="at">link_type =</span> <span class="st">&quot;region&quot;</span>,</span>
+<span id="cb33-51"><a href="#cb33-51" tabindex="-1"></a>  <span class="at">link_by =</span> <span class="st">&quot;chr,start,end&quot;</span>,</span>
+<span id="cb33-52"><a href="#cb33-52" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;qtl_analysis&quot;</span></span>
+<span id="cb33-53"><a href="#cb33-53" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="session-information" class="section level1">
 <h1>Session Information</h1>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
-<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a><span class="co">#&gt; R version 4.4.3 (2025-02-28)</span></span>
-<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-conda-linux-gnu</span></span>
-<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a><span class="co">#&gt; Running under: Red Hat Enterprise Linux 9.7 (Plow)</span></span>
-<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
-<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /nas/longleaf/home/bgural/mambaforge/envs/packrat_dev/lib/libopenblasp-r0.3.30.so;  LAPACK version 3.12.0</span></span>
-<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-9"><a href="#cb31-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
-<span id="cb31-10"><a href="#cb31-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
-<span id="cb31-11"><a href="#cb31-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
-<span id="cb31-12"><a href="#cb31-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
-<span id="cb31-13"><a href="#cb31-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
-<span id="cb31-14"><a href="#cb31-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
-<span id="cb31-15"><a href="#cb31-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
-<span id="cb31-16"><a href="#cb31-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-17"><a href="#cb31-17" tabindex="-1"></a><span class="co">#&gt; time zone: America/New_York</span></span>
-<span id="cb31-18"><a href="#cb31-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
-<span id="cb31-19"><a href="#cb31-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-20"><a href="#cb31-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
-<span id="cb31-21"><a href="#cb31-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
-<span id="cb31-22"><a href="#cb31-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-23"><a href="#cb31-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
-<span id="cb31-24"><a href="#cb31-24" tabindex="-1"></a><span class="co">#&gt; [1] jsonlite_2.0.0      data.table_1.18.2.1 locusPackRat_0.6.1 </span></span>
-<span id="cb31-25"><a href="#cb31-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb31-26"><a href="#cb31-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span id="cb31-27"><a href="#cb31-27" tabindex="-1"></a><span class="co">#&gt;  [1] tidyselect_1.2.1                         </span></span>
-<span id="cb31-28"><a href="#cb31-28" tabindex="-1"></a><span class="co">#&gt;  [2] blob_1.2.4                               </span></span>
-<span id="cb31-29"><a href="#cb31-29" tabindex="-1"></a><span class="co">#&gt;  [3] dplyr_1.2.0                              </span></span>
-<span id="cb31-30"><a href="#cb31-30" tabindex="-1"></a><span class="co">#&gt;  [4] farver_2.1.2                             </span></span>
-<span id="cb31-31"><a href="#cb31-31" tabindex="-1"></a><span class="co">#&gt;  [5] Biostrings_2.74.1                        </span></span>
-<span id="cb31-32"><a href="#cb31-32" tabindex="-1"></a><span class="co">#&gt;  [6] S7_0.2.1                                 </span></span>
-<span id="cb31-33"><a href="#cb31-33" tabindex="-1"></a><span class="co">#&gt;  [7] bitops_1.0-9                             </span></span>
-<span id="cb31-34"><a href="#cb31-34" tabindex="-1"></a><span class="co">#&gt;  [8] fastmap_1.2.0                            </span></span>
-<span id="cb31-35"><a href="#cb31-35" tabindex="-1"></a><span class="co">#&gt;  [9] RCurl_1.98-1.17                          </span></span>
-<span id="cb31-36"><a href="#cb31-36" tabindex="-1"></a><span class="co">#&gt; [10] GenomicAlignments_1.42.0                 </span></span>
-<span id="cb31-37"><a href="#cb31-37" tabindex="-1"></a><span class="co">#&gt; [11] XML_3.99-0.22                            </span></span>
-<span id="cb31-38"><a href="#cb31-38" tabindex="-1"></a><span class="co">#&gt; [12] digest_0.6.39                            </span></span>
-<span id="cb31-39"><a href="#cb31-39" tabindex="-1"></a><span class="co">#&gt; [13] lifecycle_1.0.5                          </span></span>
-<span id="cb31-40"><a href="#cb31-40" tabindex="-1"></a><span class="co">#&gt; [14] plyranges_1.26.0                         </span></span>
-<span id="cb31-41"><a href="#cb31-41" tabindex="-1"></a><span class="co">#&gt; [15] KEGGREST_1.46.0                          </span></span>
-<span id="cb31-42"><a href="#cb31-42" tabindex="-1"></a><span class="co">#&gt; [16] RSQLite_2.4.4                            </span></span>
-<span id="cb31-43"><a href="#cb31-43" tabindex="-1"></a><span class="co">#&gt; [17] magrittr_2.0.4                           </span></span>
-<span id="cb31-44"><a href="#cb31-44" tabindex="-1"></a><span class="co">#&gt; [18] compiler_4.4.3                           </span></span>
-<span id="cb31-45"><a href="#cb31-45" tabindex="-1"></a><span class="co">#&gt; [19] rlang_1.1.7                              </span></span>
-<span id="cb31-46"><a href="#cb31-46" tabindex="-1"></a><span class="co">#&gt; [20] sass_0.4.10                              </span></span>
-<span id="cb31-47"><a href="#cb31-47" tabindex="-1"></a><span class="co">#&gt; [21] tools_4.4.3                              </span></span>
-<span id="cb31-48"><a href="#cb31-48" tabindex="-1"></a><span class="co">#&gt; [22] yaml_2.3.12                              </span></span>
-<span id="cb31-49"><a href="#cb31-49" tabindex="-1"></a><span class="co">#&gt; [23] rtracklayer_1.66.0                       </span></span>
-<span id="cb31-50"><a href="#cb31-50" tabindex="-1"></a><span class="co">#&gt; [24] knitr_1.50                               </span></span>
-<span id="cb31-51"><a href="#cb31-51" tabindex="-1"></a><span class="co">#&gt; [25] S4Arrays_1.6.0                           </span></span>
-<span id="cb31-52"><a href="#cb31-52" tabindex="-1"></a><span class="co">#&gt; [26] bit_4.6.0                                </span></span>
-<span id="cb31-53"><a href="#cb31-53" tabindex="-1"></a><span class="co">#&gt; [27] curl_7.0.0                               </span></span>
-<span id="cb31-54"><a href="#cb31-54" tabindex="-1"></a><span class="co">#&gt; [28] DelayedArray_0.32.0                      </span></span>
-<span id="cb31-55"><a href="#cb31-55" tabindex="-1"></a><span class="co">#&gt; [29] RColorBrewer_1.1-3                       </span></span>
-<span id="cb31-56"><a href="#cb31-56" tabindex="-1"></a><span class="co">#&gt; [30] abind_1.4-8                              </span></span>
-<span id="cb31-57"><a href="#cb31-57" tabindex="-1"></a><span class="co">#&gt; [31] BiocParallel_1.40.2                      </span></span>
-<span id="cb31-58"><a href="#cb31-58" tabindex="-1"></a><span class="co">#&gt; [32] withr_3.0.2                              </span></span>
-<span id="cb31-59"><a href="#cb31-59" tabindex="-1"></a><span class="co">#&gt; [33] purrr_1.2.1                              </span></span>
-<span id="cb31-60"><a href="#cb31-60" tabindex="-1"></a><span class="co">#&gt; [34] BiocGenerics_0.52.0                      </span></span>
-<span id="cb31-61"><a href="#cb31-61" tabindex="-1"></a><span class="co">#&gt; [35] grid_4.4.3                               </span></span>
-<span id="cb31-62"><a href="#cb31-62" tabindex="-1"></a><span class="co">#&gt; [36] stats4_4.4.3                             </span></span>
-<span id="cb31-63"><a href="#cb31-63" tabindex="-1"></a><span class="co">#&gt; [37] Rhdf5lib_1.28.0                          </span></span>
-<span id="cb31-64"><a href="#cb31-64" tabindex="-1"></a><span class="co">#&gt; [38] ggplot2_4.0.2                            </span></span>
-<span id="cb31-65"><a href="#cb31-65" tabindex="-1"></a><span class="co">#&gt; [39] scales_1.4.0                             </span></span>
-<span id="cb31-66"><a href="#cb31-66" tabindex="-1"></a><span class="co">#&gt; [40] SummarizedExperiment_1.36.0              </span></span>
-<span id="cb31-67"><a href="#cb31-67" tabindex="-1"></a><span class="co">#&gt; [41] cli_3.6.5                                </span></span>
-<span id="cb31-68"><a href="#cb31-68" tabindex="-1"></a><span class="co">#&gt; [42] rmarkdown_2.30                           </span></span>
-<span id="cb31-69"><a href="#cb31-69" tabindex="-1"></a><span class="co">#&gt; [43] crayon_1.5.3                             </span></span>
-<span id="cb31-70"><a href="#cb31-70" tabindex="-1"></a><span class="co">#&gt; [44] generics_0.1.4                           </span></span>
-<span id="cb31-71"><a href="#cb31-71" tabindex="-1"></a><span class="co">#&gt; [45] httr_1.4.8                               </span></span>
-<span id="cb31-72"><a href="#cb31-72" tabindex="-1"></a><span class="co">#&gt; [46] rjson_0.2.23                             </span></span>
-<span id="cb31-73"><a href="#cb31-73" tabindex="-1"></a><span class="co">#&gt; [47] DBI_1.2.3                                </span></span>
-<span id="cb31-74"><a href="#cb31-74" tabindex="-1"></a><span class="co">#&gt; [48] cachem_1.1.0                             </span></span>
-<span id="cb31-75"><a href="#cb31-75" tabindex="-1"></a><span class="co">#&gt; [49] rhdf5_2.50.2                             </span></span>
-<span id="cb31-76"><a href="#cb31-76" tabindex="-1"></a><span class="co">#&gt; [50] zlibbioc_1.52.0                          </span></span>
-<span id="cb31-77"><a href="#cb31-77" tabindex="-1"></a><span class="co">#&gt; [51] parallel_4.4.3                           </span></span>
-<span id="cb31-78"><a href="#cb31-78" tabindex="-1"></a><span class="co">#&gt; [52] ggplotify_0.1.3                          </span></span>
-<span id="cb31-79"><a href="#cb31-79" tabindex="-1"></a><span class="co">#&gt; [53] AnnotationDbi_1.68.0                     </span></span>
-<span id="cb31-80"><a href="#cb31-80" tabindex="-1"></a><span class="co">#&gt; [54] XVector_0.46.0                           </span></span>
-<span id="cb31-81"><a href="#cb31-81" tabindex="-1"></a><span class="co">#&gt; [55] restfulr_0.0.16                          </span></span>
-<span id="cb31-82"><a href="#cb31-82" tabindex="-1"></a><span class="co">#&gt; [56] matrixStats_1.5.0                        </span></span>
-<span id="cb31-83"><a href="#cb31-83" tabindex="-1"></a><span class="co">#&gt; [57] yulab.utils_0.2.4                        </span></span>
-<span id="cb31-84"><a href="#cb31-84" tabindex="-1"></a><span class="co">#&gt; [58] vctrs_0.7.1                              </span></span>
-<span id="cb31-85"><a href="#cb31-85" tabindex="-1"></a><span class="co">#&gt; [59] Matrix_1.7-4                             </span></span>
-<span id="cb31-86"><a href="#cb31-86" tabindex="-1"></a><span class="co">#&gt; [60] gridGraphics_0.5-1                       </span></span>
-<span id="cb31-87"><a href="#cb31-87" tabindex="-1"></a><span class="co">#&gt; [61] IRanges_2.40.1                           </span></span>
-<span id="cb31-88"><a href="#cb31-88" tabindex="-1"></a><span class="co">#&gt; [62] S4Vectors_0.44.0                         </span></span>
-<span id="cb31-89"><a href="#cb31-89" tabindex="-1"></a><span class="co">#&gt; [63] bit64_4.6.0-1                            </span></span>
-<span id="cb31-90"><a href="#cb31-90" tabindex="-1"></a><span class="co">#&gt; [64] GenomicFeatures_1.58.0                   </span></span>
-<span id="cb31-91"><a href="#cb31-91" tabindex="-1"></a><span class="co">#&gt; [65] strawr_0.0.92                            </span></span>
-<span id="cb31-92"><a href="#cb31-92" tabindex="-1"></a><span class="co">#&gt; [66] jquerylib_0.1.4                          </span></span>
-<span id="cb31-93"><a href="#cb31-93" tabindex="-1"></a><span class="co">#&gt; [67] glue_1.8.0                               </span></span>
-<span id="cb31-94"><a href="#cb31-94" tabindex="-1"></a><span class="co">#&gt; [68] TxDb.Mmusculus.UCSC.mm39.knownGene_3.20.0</span></span>
-<span id="cb31-95"><a href="#cb31-95" tabindex="-1"></a><span class="co">#&gt; [69] org.Mm.eg.db_3.20.0                      </span></span>
-<span id="cb31-96"><a href="#cb31-96" tabindex="-1"></a><span class="co">#&gt; [70] plotgardener_1.12.0                      </span></span>
-<span id="cb31-97"><a href="#cb31-97" tabindex="-1"></a><span class="co">#&gt; [71] codetools_0.2-20                         </span></span>
-<span id="cb31-98"><a href="#cb31-98" tabindex="-1"></a><span class="co">#&gt; [72] stringi_1.8.7                            </span></span>
-<span id="cb31-99"><a href="#cb31-99" tabindex="-1"></a><span class="co">#&gt; [73] gtable_0.3.6                             </span></span>
-<span id="cb31-100"><a href="#cb31-100" tabindex="-1"></a><span class="co">#&gt; [74] GenomeInfoDb_1.42.3                      </span></span>
-<span id="cb31-101"><a href="#cb31-101" tabindex="-1"></a><span class="co">#&gt; [75] GenomicRanges_1.58.0                     </span></span>
-<span id="cb31-102"><a href="#cb31-102" tabindex="-1"></a><span class="co">#&gt; [76] BiocIO_1.16.0                            </span></span>
-<span id="cb31-103"><a href="#cb31-103" tabindex="-1"></a><span class="co">#&gt; [77] UCSC.utils_1.2.0                         </span></span>
-<span id="cb31-104"><a href="#cb31-104" tabindex="-1"></a><span class="co">#&gt; [78] tibble_3.3.1                             </span></span>
-<span id="cb31-105"><a href="#cb31-105" tabindex="-1"></a><span class="co">#&gt; [79] pillar_1.11.1                            </span></span>
-<span id="cb31-106"><a href="#cb31-106" tabindex="-1"></a><span class="co">#&gt; [80] rappdirs_0.3.4                           </span></span>
-<span id="cb31-107"><a href="#cb31-107" tabindex="-1"></a><span class="co">#&gt; [81] htmltools_0.5.8.1                        </span></span>
-<span id="cb31-108"><a href="#cb31-108" tabindex="-1"></a><span class="co">#&gt; [82] rhdf5filters_1.18.1                      </span></span>
-<span id="cb31-109"><a href="#cb31-109" tabindex="-1"></a><span class="co">#&gt; [83] GenomeInfoDbData_1.2.13                  </span></span>
-<span id="cb31-110"><a href="#cb31-110" tabindex="-1"></a><span class="co">#&gt; [84] R6_2.6.1                                 </span></span>
-<span id="cb31-111"><a href="#cb31-111" tabindex="-1"></a><span class="co">#&gt; [85] evaluate_1.0.5                           </span></span>
-<span id="cb31-112"><a href="#cb31-112" tabindex="-1"></a><span class="co">#&gt; [86] lattice_0.22-7                           </span></span>
-<span id="cb31-113"><a href="#cb31-113" tabindex="-1"></a><span class="co">#&gt; [87] Biobase_2.66.0                           </span></span>
-<span id="cb31-114"><a href="#cb31-114" tabindex="-1"></a><span class="co">#&gt; [88] png_0.1-8                                </span></span>
-<span id="cb31-115"><a href="#cb31-115" tabindex="-1"></a><span class="co">#&gt; [89] Rsamtools_2.22.0                         </span></span>
-<span id="cb31-116"><a href="#cb31-116" tabindex="-1"></a><span class="co">#&gt; [90] openxlsx_4.2.8.1                         </span></span>
-<span id="cb31-117"><a href="#cb31-117" tabindex="-1"></a><span class="co">#&gt; [91] memoise_2.0.1                            </span></span>
-<span id="cb31-118"><a href="#cb31-118" tabindex="-1"></a><span class="co">#&gt; [92] bslib_0.9.0                              </span></span>
-<span id="cb31-119"><a href="#cb31-119" tabindex="-1"></a><span class="co">#&gt; [93] Rcpp_1.1.1                               </span></span>
-<span id="cb31-120"><a href="#cb31-120" tabindex="-1"></a><span class="co">#&gt; [94] zip_2.3.3                                </span></span>
-<span id="cb31-121"><a href="#cb31-121" tabindex="-1"></a><span class="co">#&gt; [95] SparseArray_1.6.2                        </span></span>
-<span id="cb31-122"><a href="#cb31-122" tabindex="-1"></a><span class="co">#&gt; [96] xfun_0.54                                </span></span>
-<span id="cb31-123"><a href="#cb31-123" tabindex="-1"></a><span class="co">#&gt; [97] fs_1.6.6                                 </span></span>
-<span id="cb31-124"><a href="#cb31-124" tabindex="-1"></a><span class="co">#&gt; [98] MatrixGenerics_1.18.1                    </span></span>
-<span id="cb31-125"><a href="#cb31-125" tabindex="-1"></a><span class="co">#&gt; [99] pkgconfig_2.0.3</span></span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-conda-linux-gnu</span></span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a><span class="co">#&gt; Running under: Red Hat Enterprise Linux 9.7 (Plow)</span></span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /nas/longleaf/home/bgural/mambaforge/envs/packrat_dev/lib/libopenblasp-r0.3.30.so;  LAPACK version 3.12.0</span></span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-9"><a href="#cb34-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb34-10"><a href="#cb34-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span id="cb34-11"><a href="#cb34-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span id="cb34-12"><a href="#cb34-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span id="cb34-13"><a href="#cb34-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span id="cb34-14"><a href="#cb34-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span id="cb34-15"><a href="#cb34-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span id="cb34-16"><a href="#cb34-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-17"><a href="#cb34-17" tabindex="-1"></a><span class="co">#&gt; time zone: America/New_York</span></span>
+<span id="cb34-18"><a href="#cb34-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span id="cb34-19"><a href="#cb34-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-20"><a href="#cb34-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb34-21"><a href="#cb34-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb34-22"><a href="#cb34-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-23"><a href="#cb34-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb34-24"><a href="#cb34-24" tabindex="-1"></a><span class="co">#&gt; [1] jsonlite_2.0.0     httr_1.4.8         data.table_1.17.8  locusPackRat_0.6.2</span></span>
+<span id="cb34-25"><a href="#cb34-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb34-26"><a href="#cb34-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb34-27"><a href="#cb34-27" tabindex="-1"></a><span class="co">#&gt;  [1] tidyselect_1.2.1                         </span></span>
+<span id="cb34-28"><a href="#cb34-28" tabindex="-1"></a><span class="co">#&gt;  [2] blob_1.2.4                               </span></span>
+<span id="cb34-29"><a href="#cb34-29" tabindex="-1"></a><span class="co">#&gt;  [3] dplyr_1.2.0                              </span></span>
+<span id="cb34-30"><a href="#cb34-30" tabindex="-1"></a><span class="co">#&gt;  [4] farver_2.1.2                             </span></span>
+<span id="cb34-31"><a href="#cb34-31" tabindex="-1"></a><span class="co">#&gt;  [5] Biostrings_2.74.1                        </span></span>
+<span id="cb34-32"><a href="#cb34-32" tabindex="-1"></a><span class="co">#&gt;  [6] S7_0.2.1                                 </span></span>
+<span id="cb34-33"><a href="#cb34-33" tabindex="-1"></a><span class="co">#&gt;  [7] bitops_1.0-9                             </span></span>
+<span id="cb34-34"><a href="#cb34-34" tabindex="-1"></a><span class="co">#&gt;  [8] fastmap_1.2.0                            </span></span>
+<span id="cb34-35"><a href="#cb34-35" tabindex="-1"></a><span class="co">#&gt;  [9] RCurl_1.98-1.17                          </span></span>
+<span id="cb34-36"><a href="#cb34-36" tabindex="-1"></a><span class="co">#&gt; [10] GenomicAlignments_1.42.0                 </span></span>
+<span id="cb34-37"><a href="#cb34-37" tabindex="-1"></a><span class="co">#&gt; [11] XML_3.99-0.20                            </span></span>
+<span id="cb34-38"><a href="#cb34-38" tabindex="-1"></a><span class="co">#&gt; [12] digest_0.6.39                            </span></span>
+<span id="cb34-39"><a href="#cb34-39" tabindex="-1"></a><span class="co">#&gt; [13] lifecycle_1.0.5                          </span></span>
+<span id="cb34-40"><a href="#cb34-40" tabindex="-1"></a><span class="co">#&gt; [14] plyranges_1.26.0                         </span></span>
+<span id="cb34-41"><a href="#cb34-41" tabindex="-1"></a><span class="co">#&gt; [15] KEGGREST_1.46.0                          </span></span>
+<span id="cb34-42"><a href="#cb34-42" tabindex="-1"></a><span class="co">#&gt; [16] RSQLite_2.4.4                            </span></span>
+<span id="cb34-43"><a href="#cb34-43" tabindex="-1"></a><span class="co">#&gt; [17] magrittr_2.0.4                           </span></span>
+<span id="cb34-44"><a href="#cb34-44" tabindex="-1"></a><span class="co">#&gt; [18] compiler_4.5.2                           </span></span>
+<span id="cb34-45"><a href="#cb34-45" tabindex="-1"></a><span class="co">#&gt; [19] rlang_1.1.7                              </span></span>
+<span id="cb34-46"><a href="#cb34-46" tabindex="-1"></a><span class="co">#&gt; [20] sass_0.4.10                              </span></span>
+<span id="cb34-47"><a href="#cb34-47" tabindex="-1"></a><span class="co">#&gt; [21] tools_4.5.2                              </span></span>
+<span id="cb34-48"><a href="#cb34-48" tabindex="-1"></a><span class="co">#&gt; [22] yaml_2.3.12                              </span></span>
+<span id="cb34-49"><a href="#cb34-49" tabindex="-1"></a><span class="co">#&gt; [23] rtracklayer_1.66.0                       </span></span>
+<span id="cb34-50"><a href="#cb34-50" tabindex="-1"></a><span class="co">#&gt; [24] knitr_1.51                               </span></span>
+<span id="cb34-51"><a href="#cb34-51" tabindex="-1"></a><span class="co">#&gt; [25] S4Arrays_1.6.0                           </span></span>
+<span id="cb34-52"><a href="#cb34-52" tabindex="-1"></a><span class="co">#&gt; [26] bit_4.6.0                                </span></span>
+<span id="cb34-53"><a href="#cb34-53" tabindex="-1"></a><span class="co">#&gt; [27] curl_7.0.0                               </span></span>
+<span id="cb34-54"><a href="#cb34-54" tabindex="-1"></a><span class="co">#&gt; [28] DelayedArray_0.32.0                      </span></span>
+<span id="cb34-55"><a href="#cb34-55" tabindex="-1"></a><span class="co">#&gt; [29] RColorBrewer_1.1-3                       </span></span>
+<span id="cb34-56"><a href="#cb34-56" tabindex="-1"></a><span class="co">#&gt; [30] abind_1.4-8                              </span></span>
+<span id="cb34-57"><a href="#cb34-57" tabindex="-1"></a><span class="co">#&gt; [31] BiocParallel_1.40.2                      </span></span>
+<span id="cb34-58"><a href="#cb34-58" tabindex="-1"></a><span class="co">#&gt; [32] withr_3.0.2                              </span></span>
+<span id="cb34-59"><a href="#cb34-59" tabindex="-1"></a><span class="co">#&gt; [33] purrr_1.2.1                              </span></span>
+<span id="cb34-60"><a href="#cb34-60" tabindex="-1"></a><span class="co">#&gt; [34] BiocGenerics_0.56.0                      </span></span>
+<span id="cb34-61"><a href="#cb34-61" tabindex="-1"></a><span class="co">#&gt; [35] grid_4.5.2                               </span></span>
+<span id="cb34-62"><a href="#cb34-62" tabindex="-1"></a><span class="co">#&gt; [36] stats4_4.5.2                             </span></span>
+<span id="cb34-63"><a href="#cb34-63" tabindex="-1"></a><span class="co">#&gt; [37] Rhdf5lib_1.28.0                          </span></span>
+<span id="cb34-64"><a href="#cb34-64" tabindex="-1"></a><span class="co">#&gt; [38] ggplot2_4.0.2                            </span></span>
+<span id="cb34-65"><a href="#cb34-65" tabindex="-1"></a><span class="co">#&gt; [39] scales_1.4.0                             </span></span>
+<span id="cb34-66"><a href="#cb34-66" tabindex="-1"></a><span class="co">#&gt; [40] SummarizedExperiment_1.36.0              </span></span>
+<span id="cb34-67"><a href="#cb34-67" tabindex="-1"></a><span class="co">#&gt; [41] cli_3.6.5                                </span></span>
+<span id="cb34-68"><a href="#cb34-68" tabindex="-1"></a><span class="co">#&gt; [42] rmarkdown_2.30                           </span></span>
+<span id="cb34-69"><a href="#cb34-69" tabindex="-1"></a><span class="co">#&gt; [43] crayon_1.5.3                             </span></span>
+<span id="cb34-70"><a href="#cb34-70" tabindex="-1"></a><span class="co">#&gt; [44] generics_0.1.4                           </span></span>
+<span id="cb34-71"><a href="#cb34-71" tabindex="-1"></a><span class="co">#&gt; [45] otel_0.2.0                               </span></span>
+<span id="cb34-72"><a href="#cb34-72" tabindex="-1"></a><span class="co">#&gt; [46] rjson_0.2.23                             </span></span>
+<span id="cb34-73"><a href="#cb34-73" tabindex="-1"></a><span class="co">#&gt; [47] DBI_1.2.3                                </span></span>
+<span id="cb34-74"><a href="#cb34-74" tabindex="-1"></a><span class="co">#&gt; [48] cachem_1.1.0                             </span></span>
+<span id="cb34-75"><a href="#cb34-75" tabindex="-1"></a><span class="co">#&gt; [49] rhdf5_2.50.2                             </span></span>
+<span id="cb34-76"><a href="#cb34-76" tabindex="-1"></a><span class="co">#&gt; [50] zlibbioc_1.52.0                          </span></span>
+<span id="cb34-77"><a href="#cb34-77" tabindex="-1"></a><span class="co">#&gt; [51] parallel_4.5.2                           </span></span>
+<span id="cb34-78"><a href="#cb34-78" tabindex="-1"></a><span class="co">#&gt; [52] AnnotationDbi_1.68.0                     </span></span>
+<span id="cb34-79"><a href="#cb34-79" tabindex="-1"></a><span class="co">#&gt; [53] ggplotify_0.1.3                          </span></span>
+<span id="cb34-80"><a href="#cb34-80" tabindex="-1"></a><span class="co">#&gt; [54] XVector_0.46.0                           </span></span>
+<span id="cb34-81"><a href="#cb34-81" tabindex="-1"></a><span class="co">#&gt; [55] restfulr_0.0.16                          </span></span>
+<span id="cb34-82"><a href="#cb34-82" tabindex="-1"></a><span class="co">#&gt; [56] matrixStats_1.5.0                        </span></span>
+<span id="cb34-83"><a href="#cb34-83" tabindex="-1"></a><span class="co">#&gt; [57] yulab.utils_0.2.4                        </span></span>
+<span id="cb34-84"><a href="#cb34-84" tabindex="-1"></a><span class="co">#&gt; [58] vctrs_0.7.1                              </span></span>
+<span id="cb34-85"><a href="#cb34-85" tabindex="-1"></a><span class="co">#&gt; [59] Matrix_1.7-4                             </span></span>
+<span id="cb34-86"><a href="#cb34-86" tabindex="-1"></a><span class="co">#&gt; [60] gridGraphics_0.5-1                       </span></span>
+<span id="cb34-87"><a href="#cb34-87" tabindex="-1"></a><span class="co">#&gt; [61] IRanges_2.40.1                           </span></span>
+<span id="cb34-88"><a href="#cb34-88" tabindex="-1"></a><span class="co">#&gt; [62] S4Vectors_0.48.0                         </span></span>
+<span id="cb34-89"><a href="#cb34-89" tabindex="-1"></a><span class="co">#&gt; [63] bit64_4.6.0-1                            </span></span>
+<span id="cb34-90"><a href="#cb34-90" tabindex="-1"></a><span class="co">#&gt; [64] GenomicFeatures_1.58.0                   </span></span>
+<span id="cb34-91"><a href="#cb34-91" tabindex="-1"></a><span class="co">#&gt; [65] strawr_0.0.92                            </span></span>
+<span id="cb34-92"><a href="#cb34-92" tabindex="-1"></a><span class="co">#&gt; [66] jquerylib_0.1.4                          </span></span>
+<span id="cb34-93"><a href="#cb34-93" tabindex="-1"></a><span class="co">#&gt; [67] glue_1.8.0                               </span></span>
+<span id="cb34-94"><a href="#cb34-94" tabindex="-1"></a><span class="co">#&gt; [68] TxDb.Mmusculus.UCSC.mm39.knownGene_3.20.0</span></span>
+<span id="cb34-95"><a href="#cb34-95" tabindex="-1"></a><span class="co">#&gt; [69] org.Mm.eg.db_3.20.0                      </span></span>
+<span id="cb34-96"><a href="#cb34-96" tabindex="-1"></a><span class="co">#&gt; [70] plotgardener_1.12.0                      </span></span>
+<span id="cb34-97"><a href="#cb34-97" tabindex="-1"></a><span class="co">#&gt; [71] codetools_0.2-20                         </span></span>
+<span id="cb34-98"><a href="#cb34-98" tabindex="-1"></a><span class="co">#&gt; [72] stringi_1.8.7                            </span></span>
+<span id="cb34-99"><a href="#cb34-99" tabindex="-1"></a><span class="co">#&gt; [73] gtable_0.3.6                             </span></span>
+<span id="cb34-100"><a href="#cb34-100" tabindex="-1"></a><span class="co">#&gt; [74] GenomeInfoDb_1.42.3                      </span></span>
+<span id="cb34-101"><a href="#cb34-101" tabindex="-1"></a><span class="co">#&gt; [75] GenomicRanges_1.58.0                     </span></span>
+<span id="cb34-102"><a href="#cb34-102" tabindex="-1"></a><span class="co">#&gt; [76] BiocIO_1.16.0                            </span></span>
+<span id="cb34-103"><a href="#cb34-103" tabindex="-1"></a><span class="co">#&gt; [77] UCSC.utils_1.2.0                         </span></span>
+<span id="cb34-104"><a href="#cb34-104" tabindex="-1"></a><span class="co">#&gt; [78] tibble_3.3.1                             </span></span>
+<span id="cb34-105"><a href="#cb34-105" tabindex="-1"></a><span class="co">#&gt; [79] pillar_1.11.1                            </span></span>
+<span id="cb34-106"><a href="#cb34-106" tabindex="-1"></a><span class="co">#&gt; [80] rappdirs_0.3.4                           </span></span>
+<span id="cb34-107"><a href="#cb34-107" tabindex="-1"></a><span class="co">#&gt; [81] htmltools_0.5.9                          </span></span>
+<span id="cb34-108"><a href="#cb34-108" tabindex="-1"></a><span class="co">#&gt; [82] rhdf5filters_1.18.1                      </span></span>
+<span id="cb34-109"><a href="#cb34-109" tabindex="-1"></a><span class="co">#&gt; [83] GenomeInfoDbData_1.2.13                  </span></span>
+<span id="cb34-110"><a href="#cb34-110" tabindex="-1"></a><span class="co">#&gt; [84] R6_2.6.1                                 </span></span>
+<span id="cb34-111"><a href="#cb34-111" tabindex="-1"></a><span class="co">#&gt; [85] evaluate_1.0.5                           </span></span>
+<span id="cb34-112"><a href="#cb34-112" tabindex="-1"></a><span class="co">#&gt; [86] lattice_0.22-9                           </span></span>
+<span id="cb34-113"><a href="#cb34-113" tabindex="-1"></a><span class="co">#&gt; [87] Biobase_2.66.0                           </span></span>
+<span id="cb34-114"><a href="#cb34-114" tabindex="-1"></a><span class="co">#&gt; [88] png_0.1-8                                </span></span>
+<span id="cb34-115"><a href="#cb34-115" tabindex="-1"></a><span class="co">#&gt; [89] Rsamtools_2.22.0                         </span></span>
+<span id="cb34-116"><a href="#cb34-116" tabindex="-1"></a><span class="co">#&gt; [90] openxlsx_4.2.8.1                         </span></span>
+<span id="cb34-117"><a href="#cb34-117" tabindex="-1"></a><span class="co">#&gt; [91] memoise_2.0.1                            </span></span>
+<span id="cb34-118"><a href="#cb34-118" tabindex="-1"></a><span class="co">#&gt; [92] bslib_0.10.0                             </span></span>
+<span id="cb34-119"><a href="#cb34-119" tabindex="-1"></a><span class="co">#&gt; [93] Rcpp_1.1.1                               </span></span>
+<span id="cb34-120"><a href="#cb34-120" tabindex="-1"></a><span class="co">#&gt; [94] zip_2.3.3                                </span></span>
+<span id="cb34-121"><a href="#cb34-121" tabindex="-1"></a><span class="co">#&gt; [95] SparseArray_1.6.2                        </span></span>
+<span id="cb34-122"><a href="#cb34-122" tabindex="-1"></a><span class="co">#&gt; [96] xfun_0.56                                </span></span>
+<span id="cb34-123"><a href="#cb34-123" tabindex="-1"></a><span class="co">#&gt; [97] fs_1.6.6                                 </span></span>
+<span id="cb34-124"><a href="#cb34-124" tabindex="-1"></a><span class="co">#&gt; [98] MatrixGenerics_1.18.1                    </span></span>
+<span id="cb34-125"><a href="#cb34-125" tabindex="-1"></a><span class="co">#&gt; [99] pkgconfig_2.0.3</span></span></code></pre></div>
 </div>
 
 

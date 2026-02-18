@@ -16,7 +16,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
@@ -40,8 +40,8 @@ population-specific molecular QTL data that is directly relevant to model organi
 studies. This makes it a valuable complement to the human-centric annotations
 retrieved by `queryOpenTargets()` and `queryOpenTargetsQTL()`.
 
-All code chunks in this vignette are set to `eval=FALSE` to avoid API dependency
-during package builds. Users should run the code interactively.
+Live API calls are attempted first; if the GeneNetwork2 API is unavailable, cached
+responses bundled with the package are used as a fallback.
 
 # Prerequisites
 
@@ -61,11 +61,33 @@ Key endpoints include:
 - **`/groups/{species}`**: List available populations (e.g., BXD, DO)
 - **`/datasets/{group}`**: List available datasets for a population
 - **`/traits/{dataset}`**: List traits within a dataset
-- **`/trait/{dataset}/{trait_id}`**: Get detailed trait information
+- **`/trait/{dataset}/{probe_name}`**: Get detailed trait information
 
-```{r api_base}
+```{r api_setup}
 # Base URL for GeneNetwork2 API
 gn2_base <- "https://genenetwork.org/api/v_pre1"
+
+# Helper: fetch from API with cached fallback
+gn_fetch_or_cache <- function(url, cache_file, timeout_sec = 30) {
+  result <- tryCatch({
+    resp <- httr::GET(url, httr::timeout(timeout_sec))
+    httr::stop_for_status(resp)
+    jsonlite::fromJSON(httr::content(resp, as = "text", encoding = "UTF-8"))
+  }, error = function(e) NULL)
+
+  if (!is.null(result) && length(result) > 0) {
+    message("GeneNetwork API: live data retrieved")
+    return(result)
+  }
+
+  cache_path <- system.file("extdata", "gn_cache", cache_file,
+                            package = "locusPackRat")
+  if (nzchar(cache_path) && file.exists(cache_path)) {
+    message("GeneNetwork API: using cached data (API unavailable)")
+    return(jsonlite::fromJSON(cache_path))
+  }
+  stop("GeneNetwork API unavailable and no cached data found for: ", cache_file)
+}
 ```
 
 # Example 1: BxD eQTL Data
@@ -77,72 +99,80 @@ The BxD panel has dozens of expression datasets spanning multiple tissues
 
 ```{r list_bxd_datasets}
 # Fetch all datasets for the BXD group
-bxd_datasets <- fromJSON(content(
-  GET(paste0(gn2_base, "/datasets/BXD")),
-  as = "text", encoding = "UTF-8"
-))
+bxd_datasets <- gn_fetch_or_cache(
+  paste0(gn2_base, "/datasets/BXD"),
+  "bxd_datasets.json"
+)
 
-# Filter for expression datasets (mRNA / RNA-seq)
-expression_datasets <- bxd_datasets[grepl("mRNA|RNA-seq|expression",
-                                          bxd_datasets$tissue, ignore.case = TRUE), ]
+# The FullName column contains tissue and platform info
+# Filter for expression datasets related to heart/cardiac tissue
+heart_datasets <- bxd_datasets[grepl("Heart|Cardiac|heart|cardiac",
+                                     bxd_datasets$FullName), ]
 
-# Preview available expression datasets
-display_cols <- intersect(names(expression_datasets), c("id", "name", "tissue", "description"))
-head(expression_datasets[, display_cols, drop = FALSE])
+cat("Total BXD datasets:", nrow(bxd_datasets), "\n")
+cat("Heart-related datasets:", nrow(heart_datasets), "\n\n")
+
+# Preview heart datasets
+display_cols <- intersect(names(heart_datasets),
+                          c("Id", "FullName", "Short_Abbreviation"))
+head(heart_datasets[, display_cols, drop = FALSE])
 ```
 
 ## Query Traits for a Specific Gene
 
 To check whether a candidate gene has eQTL evidence in the BxD panel,
-query traits by gene symbol within a specific dataset.
+query traits by gene symbol within a specific dataset. The traits endpoint
+returns all probes/traits; we filter to our gene of interest.
 
 ```{r query_gene_traits}
-# Example: query Cisd2 expression traits in BXD heart dataset
-# Dataset ID will vary — use the listing above to find the correct one
-dataset_name <- "HC_M2_0606_P"  # Example: heart dataset
-
-# Search for traits matching a gene symbol
-trait_search_url <- paste0(gn2_base, "/traits/", dataset_name)
-heart_traits <- fromJSON(content(
-  GET(trait_search_url),
-  as = "text", encoding = "UTF-8"
-))
-
-# Filter for a specific gene of interest
+# Query Cisd2 expression traits in a BXD heart dataset
+dataset_name <- "HC_M2_0606_P"
 gene_of_interest <- "Cisd2"
-cisd2_traits <- heart_traits[grepl(gene_of_interest,
-                                    heart_traits$symbol, ignore.case = TRUE), ]
 
-if (nrow(cisd2_traits) > 0) {
-  cat("Found", nrow(cisd2_traits), "probes/traits for", gene_of_interest, "\n")
-  print(cisd2_traits[, c("id", "symbol", "description")])
+# Fetch traits (pre-filtered to Cisd2 in cached version)
+cisd2_traits <- gn_fetch_or_cache(
+  paste0(gn2_base, "/traits/", dataset_name),
+  "cisd2_traits.json"
+)
+
+# The live endpoint returns ALL traits; filter to our gene
+# The cached version is already pre-filtered
+if (nrow(cisd2_traits) > 20) {
+  # Live data -- filter by Symbol column
+  cisd2_traits <- cisd2_traits[grepl(gene_of_interest, cisd2_traits$Symbol,
+                                     ignore.case = TRUE), ]
 }
+
+cat("Found", nrow(cisd2_traits), "probes/traits for", gene_of_interest, "\n\n")
+print(cisd2_traits[, c("Name", "Symbol", "Description", "Chr", "Mb")])
 ```
 
-## Retrieve Trait Values Across BxD Strains
+Each row represents a microarray probe targeting Cisd2. The `LRS` column gives
+the likelihood ratio statistic for the best eQTL, and `Peak Chr` / `Peak Mb`
+indicate the genomic position of the peak association.
 
-Once you have identified a trait of interest, retrieve the expression values
-across all BxD strains.
+## Retrieve Trait Detail
+
+Get detailed information for a specific probe, including the additive effect
+and peak association statistics.
 
 ```{r get_trait_values}
-# Get expression values for a specific trait across BxD strains
-trait_id <- cisd2_traits$id[1]  # Use the first matching probe
+# Get detail for the first (strongest) Cisd2 probe
+probe_name <- cisd2_traits$Name[1]
 
-trait_url <- paste0(gn2_base, "/trait/", dataset_name, "/", trait_id)
-trait_data <- fromJSON(content(
-  GET(trait_url),
-  as = "text", encoding = "UTF-8"
-))
+trait_detail <- gn_fetch_or_cache(
+  paste0(gn2_base, "/trait/", dataset_name, "/", probe_name),
+  "cisd2_trait_detail.json"
+)
 
-# Convert to data.table for locusPackRat integration
-if (!is.null(trait_data$sample_data)) {
-  strain_expression <- data.table(
-    strain = names(trait_data$sample_data),
-    expression = unlist(trait_data$sample_data)
-  )
-  cat("Expression data for", nrow(strain_expression), "BxD strains\n")
-  head(strain_expression)
-}
+cat("Probe:", trait_detail$name, "\n")
+cat("Gene:", trait_detail$symbol, "\n")
+cat("Description:", trait_detail$description, "\n")
+cat("Chromosome:", trait_detail$chr, "at", trait_detail$mb, "Mb\n")
+cat("Best LRS:", round(trait_detail$lrs, 2),
+    "(LOD ~", round(trait_detail$lrs / 4.61, 2), ")\n")
+cat("Peak locus:", trait_detail$locus, "\n")
+cat("Additive effect:", round(trait_detail$additive, 4), "\n")
 ```
 
 ## Run QTL Mapping via GEMMA
@@ -151,129 +181,172 @@ GeneNetwork2 can perform on-the-fly QTL mapping using GEMMA (Genome-wide
 Efficient Mixed Model Association). This returns LOD scores across the genome.
 
 ```{r run_gemma}
-# Request GEMMA mapping for a trait
-# Note: this endpoint may take some time to return results
-gemma_url <- paste0(gn2_base, "/mapping?trait_id=", trait_id,
+# Request GEMMA mapping for the Cisd2 probe
+# Note: this endpoint may take 30-60 seconds to return results
+gemma_url <- paste0(gn2_base, "/mapping?trait_id=", probe_name,
                     "&db=", dataset_name,
                     "&method=gemma")
 
-gemma_results <- fromJSON(content(
-  GET(gemma_url, timeout(120)),
-  as = "text", encoding = "UTF-8"
-))
+gemma_raw <- gn_fetch_or_cache(gemma_url, "cisd2_gemma.json", timeout_sec = 120)
 
-# Convert to data.table
-if (length(gemma_results) > 0) {
+# The API returns a nested list; extract the data frame
+if (is.data.frame(gemma_raw)) {
+  gemma_results <- gemma_raw
+} else if (is.list(gemma_raw) && length(gemma_raw) > 0) {
+  gemma_results <- gemma_raw[[1]]
+} else {
+  gemma_results <- data.frame()
+}
+
+if (nrow(gemma_results) > 0) {
   eqtl_scan <- data.table(
     chr = gemma_results$chr,
     pos = gemma_results$Mb * 1e6,  # Convert Mb to bp
+    pos_mb = gemma_results$Mb,
     lod = gemma_results$lod_score,
+    p_value = gemma_results$p_value,
+    marker = gemma_results$name,
     gene_symbol = gene_of_interest,
     source = "GeneNetwork2_BxD"
   )
 
-  # Filter for significant peaks (e.g., LOD > 3)
-  significant_eqtl <- eqtl_scan[lod > 3]
-  cat("Found", nrow(significant_eqtl), "significant eQTL positions\n")
+  # Summary of the scan
+  cat("Total markers scanned:", nrow(eqtl_scan), "\n")
+  cat("Significant positions (LOD > 3):", sum(eqtl_scan$lod > 3), "\n\n")
+
+  # Show the top peaks
+  top_peaks <- eqtl_scan[order(-lod)][1:5]
+  print(top_peaks[, .(chr, pos_mb, lod, p_value, marker)])
 }
 ```
 
-# Example 2: DO Phenotype Data
+The strongest eQTL for Cisd2 maps to chromosome 3, near the gene's own
+position -- consistent with a *cis*-eQTL, which supports its candidacy in a
+QTL study targeting this region.
 
-The Diversity Outbred (DO) population provides higher mapping resolution
-than the BxD panel due to its greater genetic diversity.
+# Example 2: BXD Published Phenotypes
 
-## List Available DO Datasets
+GeneNetwork2 also hosts curated phenotype data for BXD strains. Published
+phenotypes can be accessed through the `BXDPublish` dataset, providing
+higher-level trait-QTL associations.
 
-```{r list_do_datasets}
-# Fetch datasets for the DO group
-do_datasets <- fromJSON(content(
-  GET(paste0(gn2_base, "/datasets/DO")),
-  as = "text", encoding = "UTF-8"
-))
+```{r list_bxd_phenotypes}
+# Fetch BXD published phenotype traits
+bxd_pheno <- tryCatch({
+  gn_fetch_or_cache(
+    paste0(gn2_base, "/traits/BXDPublish"),
+    cache_file = NULL  # no cache for this endpoint
+  )
+}, error = function(e) {
+  message("BXD published phenotypes unavailable: ", e$message)
+  NULL
+})
 
-# Preview
-display_cols <- intersect(names(do_datasets), c("id", "name", "tissue", "description"))
-head(do_datasets[, display_cols, drop = FALSE])
-```
+if (!is.null(bxd_pheno) && nrow(bxd_pheno) > 0) {
+  cat("Total BXD published phenotype traits:", nrow(bxd_pheno), "\n\n")
 
-## Query DO Phenotype Traits
-
-```{r query_do_phenotypes}
-# Example: query a DO phenotype dataset
-do_dataset_name <- do_datasets$name[1]  # Use first available
-
-do_traits <- fromJSON(content(
-  GET(paste0(gn2_base, "/traits/", do_dataset_name)),
-  as = "text", encoding = "UTF-8"
-))
-
-# Preview available traits
-if (nrow(do_traits) > 0) {
-  head(do_traits[, c("id", "symbol", "description")])
+  # Show a few example traits
+  display_cols <- intersect(names(bxd_pheno), c("Id", "Name", "Description", "Symbol"))
+  print(head(bxd_pheno[, display_cols, drop = FALSE], 10))
+} else {
+  cat("BXD published phenotype data not available via this API endpoint.\n")
+  cat("Visit https://genenetwork.org to browse phenotypes interactively.\n")
 }
 ```
 
 # Integrating GeneNetwork2 Results into locusPackRat
 
-## Format eQTL Results for addRatTable()
+## Create a locusPackRat Project
 
-GeneNetwork2 QTL results can be added to a locusPackRat project using
-`addRatTable()` with either gene-level or point-level linking.
+```{r create_project}
+# Create a temporary project with candidate genes
+project_dir <- file.path(tempdir(), "gn_demo_project")
 
-### Gene-Level Integration
-
-Use `link_type = "gene"` when you have per-gene summary statistics
-(e.g., peak LOD score, cis/trans classification).
-
-```{r integrate_gene_level}
-# Summarize eQTL results per gene (e.g., maximum cis-eQTL LOD)
-# In practice, you would loop over multiple candidate genes
-eqtl_summary <- data.table(
-  gene_symbol = c("Cisd2", "Pdlim5", "Manba"),
-  bxd_max_lod = c(5.2, 3.1, 4.8),
-  bxd_peak_chr = c("3", "3", "3"),
-  bxd_peak_pos = c(135000000, 142000000, 138000000),
-  bxd_cis_eqtl = c(TRUE, FALSE, TRUE),
-  gn2_dataset = rep("HC_M2_0606_P", 3)
+gene_input <- data.frame(
+  gene_symbol = c("Cisd2", "Pdlim5", "Manba", "Fhod3", "Myh7")
 )
 
-# Add to locusPackRat project
-addRatTable(
-  data = eqtl_summary,
-  table_name = "bxd_eqtl",
-  abbreviation = "bxd",
-  link_type = "gene",
-  link_by = "gene_symbol",
-  project_dir = "my_qtl_project"
+initPackRat(
+  data = gene_input,
+  mode = "gene",
+  species = "mouse",
+  genome = "mm39",
+  project_dir = project_dir,
+  force = TRUE
 )
 ```
 
-### Point-Level Integration
+## Gene-Level Integration
 
-Use `link_type = "point"` when you have position-level QTL scan data
+Use `link_type = "gene"` when you have per-gene summary statistics
+(e.g., peak LOD score, cis/trans classification). Here we build a summary
+from the GEMMA results computed above.
+
+```{r integrate_gene_level}
+# Build a gene-level summary from the GEMMA scan
+# In a real analysis, you would loop over multiple candidate genes
+if (exists("eqtl_scan") && nrow(eqtl_scan) > 0) {
+  peak_row <- eqtl_scan[which.max(lod)]
+  gene_chr <- unique(eqtl_scan[chr == peak_row$chr, chr])
+
+  eqtl_summary <- data.table(
+    gene_symbol = gene_of_interest,
+    bxd_max_lod = round(peak_row$lod, 2),
+    bxd_peak_chr = as.character(peak_row$chr),
+    bxd_peak_mb = round(peak_row$pos_mb, 2),
+    bxd_cis_eqtl = (as.character(peak_row$chr) == as.character(cisd2_traits$Chr[1])),
+    gn2_dataset = dataset_name
+  )
+
+  print(eqtl_summary)
+
+  # Add to locusPackRat project
+  addRatTable(
+    data = eqtl_summary,
+    table_name = "bxd_eqtl",
+    abbreviation = "bxd",
+    link_type = "gene",
+    link_by = "gene_symbol",
+    project_dir = project_dir
+  )
+}
+```
+
+## Point-Level Integration
+
+Use `link_type = "region"` when you have position-level QTL scan data
 that should be mapped to overlapping genes/regions.
 
 ```{r integrate_point_level}
-# Use the full scan data from GEMMA
-# Ensure columns match the expected format: chr, pos (or start/end)
-scan_for_project <- eqtl_scan[, .(
-  chr = chr,
-  start = as.integer(pos),
-  end = as.integer(pos),
-  lod = lod,
-  gene_symbol = gene_symbol,
-  source = source
-)]
+# Use the full scan data from GEMMA -- keep significant hits only
+if (exists("eqtl_scan") && nrow(eqtl_scan) > 0) {
+  significant_hits <- eqtl_scan[lod > 3]
+  cat("Integrating", nrow(significant_hits), "significant markers\n")
 
-addRatTable(
-  data = scan_for_project,
-  table_name = "bxd_eqtl_scan",
-  abbreviation = "bxds",
-  link_type = "region",
-  link_by = "chr,start,end",
-  project_dir = "my_qtl_project"
-)
+  scan_for_project <- significant_hits[, .(
+    chr = as.character(chr),
+    start = as.integer(pos),
+    end = as.integer(pos),
+    lod = round(lod, 3),
+    gene_symbol = gene_symbol,
+    source = source
+  )]
+
+  addRatTable(
+    data = scan_for_project,
+    table_name = "bxd_eqtl_scan",
+    abbreviation = "bxds",
+    link_type = "region",
+    link_by = "chr,start,end",
+    project_dir = project_dir
+  )
+}
+```
+
+## Project State After Integration
+
+```{r show_project_state}
+listPackRatTables(project_dir)
 ```
 
 # Alternative: GNapi R Package
@@ -282,20 +355,23 @@ The [GNapi](https://github.com/kbroman/GNapi) R package by Karl Broman
 provides a more structured R client for the GeneNetwork2 API. If you
 prefer a packaged interface:
 
-```{r gnapi_example}
-# Install GNapi
+```{r gnapi_example, eval = FALSE}
+# Install GNapi (https://github.com/kbroman/GNapi)
 # remotes::install_github("kbroman/GNapi")
-
 library(GNapi)
 
-# List available species
+# List available species and groups
 species <- list_species()
+groups  <- list_groups("mouse")
 
 # List BxD datasets
 bxd_datasets <- list_datasets("BXD")
 
-# Get trait data
-trait_data <- get_trait("HC_M2_0606_P", "your_trait_id")
+# Run GEMMA QTL scan for a specific trait
+gemma_scan <- run_gemma("HC_M2_0606_P", "1428441_at")
+
+# Find correlated traits
+corr <- run_correlation("HC_M2_0606_P", "BXD", "1428441_at")
 ```
 
 # Tips and Considerations
@@ -321,4 +397,10 @@ trait_data <- get_trait("HC_M2_0606_P", "your_trait_id")
 
 ```{r session_info}
 sessionInfo()
+```
+
+```{r cleanup, include = FALSE}
+reg.finalizer(environment(), function(e) {
+  unlink(project_dir, recursive = TRUE, force = TRUE)
+}, onexit = TRUE)
 ```

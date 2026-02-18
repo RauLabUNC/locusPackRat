@@ -582,6 +582,57 @@ makeGeneSheet(
 )
 ```
 
+# Building Shareable Packets
+
+Once an analysis is complete, `buildPacket()` bundles everything in `.locusPackRat/output/` into a single zip archive with an auto-generated `README.md` summarizing the project metadata, supplementary data sources, and included files. This makes it easy to share results with collaborators who may not have R installed.
+
+```{r build_packet_qtl, message=TRUE}
+# Package the QTL analysis for sharing
+buildPacket(project_dir = "qtl_analysis", overwrite = TRUE)
+```
+
+The zip contains every file from the project's output directory (Excel workbooks, locus zoom plots, CSVs) plus a README with project metadata drawn from `config.json` and `listPackRatTables()`.
+
+You can also customize the output location and filename:
+
+```{r build_packet_custom, eval=FALSE}
+# Write to a specific directory with a custom name
+buildPacket(
+  project_dir = "rnaseq_analysis",
+  output_path = "~/shared_results",
+  filename = "rnaseq_v2_packet.zip",
+  overwrite = TRUE
+)
+
+# Skip the README if you prefer
+buildPacket(project_dir = "atacseq_analysis", include_readme = FALSE)
+```
+
+### Including Supplementary CSVs
+
+By default, `buildPacket()` bundles only the output files (Excel workbooks, plots, etc.).
+Set `include_supplementary = TRUE` to also include the raw supplementary CSV files
+from `.locusPackRat/supplementary/`, or pass a character vector to include specific tables:
+
+```{r build_packet_supplementary, eval=FALSE}
+# Include all supplementary CSVs
+buildPacket(
+  project_dir = "qtl_analysis",
+  include_supplementary = TRUE,
+  overwrite = TRUE
+)
+
+# Include only specific supplementary tables
+buildPacket(
+  project_dir = "qtl_analysis",
+  include_supplementary = c("mouseMine", "openTargets_diseases"),
+  overwrite = TRUE
+)
+```
+
+Supplementary files are placed in a `supplementary/` subdirectory within the zip, and the
+auto-generated README lists them in a separate "Included Supplementary Files" table.
+
 # Working Across Species and Genome Builds
 
 ## Human Gene Analysis with Mouse Orthologs
