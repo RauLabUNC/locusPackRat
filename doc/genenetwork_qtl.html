@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Brian Gural, Todd Kimball, Anh Luu, Christoph D. Rau" />
+
+<meta name="date" content="2026-02-18" />
+
+<title>Querying GeneNetwork2 for Model Organism QTL Data</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Querying GeneNetwork2 for Model Organism
+QTL Data</h1>
+<h4 class="author">Brian Gural, Todd Kimball, Anh Luu, Christoph D.
+Rau</h4>
+<h4 class="date">2026-02-18</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#overview" id="toc-overview">Overview</a></li>
+<li><a href="#prerequisites" id="toc-prerequisites">Prerequisites</a></li>
+<li><a href="#genenetwork2-api-basics" id="toc-genenetwork2-api-basics">GeneNetwork2 API Basics</a></li>
+<li><a href="#example-1-bxd-eqtl-data" id="toc-example-1-bxd-eqtl-data">Example 1: BxD eQTL Data</a>
+<ul>
+<li><a href="#list-available-bxd-expression-datasets" id="toc-list-available-bxd-expression-datasets">List Available BxD
+Expression Datasets</a></li>
+<li><a href="#query-traits-for-a-specific-gene" id="toc-query-traits-for-a-specific-gene">Query Traits for a Specific
+Gene</a></li>
+<li><a href="#retrieve-trait-detail" id="toc-retrieve-trait-detail">Retrieve Trait Detail</a></li>
+<li><a href="#run-qtl-mapping-via-gemma" id="toc-run-qtl-mapping-via-gemma">Run QTL Mapping via GEMMA</a></li>
+</ul></li>
+<li><a href="#example-2-bxd-published-phenotypes" id="toc-example-2-bxd-published-phenotypes">Example 2: BXD Published
+Phenotypes</a></li>
+<li><a href="#integrating-genenetwork2-results-into-locuspackrat" id="toc-integrating-genenetwork2-results-into-locuspackrat">Integrating
+GeneNetwork2 Results into locusPackRat</a>
+<ul>
+<li><a href="#create-a-locuspackrat-project" id="toc-create-a-locuspackrat-project">Create a locusPackRat
+Project</a></li>
+<li><a href="#gene-level-integration" id="toc-gene-level-integration">Gene-Level Integration</a></li>
+<li><a href="#point-level-integration" id="toc-point-level-integration">Point-Level Integration</a></li>
+<li><a href="#project-state-after-integration" id="toc-project-state-after-integration">Project State After
+Integration</a></li>
+</ul></li>
+<li><a href="#alternative-gnapi-r-package" id="toc-alternative-gnapi-r-package">Alternative: GNapi R
+Package</a></li>
+<li><a href="#tips-and-considerations" id="toc-tips-and-considerations">Tips and Considerations</a></li>
+<li><a href="#session-info" id="toc-session-info">Session Info</a></li>
+</ul>
+</div>
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>This vignette demonstrates how to query the <a href="https://genenetwork.org">GeneNetwork2</a> REST API to retrieve
+eQTL and phenotype data from model organism genetic reference
+populations (GRPs), and how to integrate those results into a
+<code>locusPackRat</code> project as additional evidence layers.</p>
+<p>GeneNetwork2 hosts QTL mapping results, expression data, and
+phenotype records for several GRPs, including:</p>
+<ul>
+<li><strong>BxD recombinant inbred lines</strong> (mouse): extensive
+eQTL, pQTL, and phenotype data</li>
+<li><strong>Diversity Outbred (DO)</strong> (mouse): high-resolution QTL
+mapping panels</li>
+<li><strong>Hybrid Mouse Diversity Panel (HMDP)</strong>: cardiovascular
+and metabolic trait data</li>
+<li><strong>Other organisms</strong>: rat (HxB/BxH), Drosophila, and
+Arabidopsis panels</li>
+</ul>
+<p>Unlike Open Targets, which focuses on human GWAS data, GeneNetwork2
+provides population-specific molecular QTL data that is directly
+relevant to model organism studies. This makes it a valuable complement
+to the human-centric annotations retrieved by
+<code>queryOpenTargets()</code> and
+<code>queryOpenTargetsQTL()</code>.</p>
+<p>Live API calls are attempted first; if the GeneNetwork2 API is
+unavailable, cached responses bundled with the package are used as a
+fallback.</p>
+</div>
+<div id="prerequisites" class="section level1">
+<h1>Prerequisites</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(locusPackRat)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(data.table)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(jsonlite)</span></code></pre></div>
+</div>
+<div id="genenetwork2-api-basics" class="section level1">
+<h1>GeneNetwork2 API Basics</h1>
+<p>The GeneNetwork2 REST API is available at
+<code>https://genenetwork.org/api/v_pre1/</code>. Key endpoints
+include:</p>
+<ul>
+<li><strong><code>/species</code></strong>: List available species</li>
+<li><strong><code>/groups/{species}</code></strong>: List available
+populations (e.g., BXD, DO)</li>
+<li><strong><code>/datasets/{group}</code></strong>: List available
+datasets for a population</li>
+<li><strong><code>/traits/{dataset}</code></strong>: List traits within
+a dataset</li>
+<li><strong><code>/trait/{dataset}/{probe_name}</code></strong>: Get
+detailed trait information</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Base URL for GeneNetwork2 API</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>gn2_base <span class="ot">&lt;-</span> <span class="st">&quot;https://genenetwork.org/api/v_pre1&quot;</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># Helper: fetch from API with cached fallback</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>gn_fetch_or_cache <span class="ot">&lt;-</span> <span class="cf">function</span>(url, cache_file, <span class="at">timeout_sec =</span> <span class="dv">30</span>) {</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>    resp <span class="ot">&lt;-</span> httr<span class="sc">::</span><span class="fu">GET</span>(url, httr<span class="sc">::</span><span class="fu">timeout</span>(timeout_sec))</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>    httr<span class="sc">::</span><span class="fu">stop_for_status</span>(resp)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>    jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(httr<span class="sc">::</span><span class="fu">content</span>(resp, <span class="at">as =</span> <span class="st">&quot;text&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>))</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(result) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(result) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">&quot;GeneNetwork API: live data retrieved&quot;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>    <span class="fu">return</span>(result)</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  }</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  cache_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;gn_cache&quot;</span>, cache_file,</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>                            <span class="at">package =</span> <span class="st">&quot;locusPackRat&quot;</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nzchar</span>(cache_path) <span class="sc">&amp;&amp;</span> <span class="fu">file.exists</span>(cache_path)) {</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">&quot;GeneNetwork API: using cached data (API unavailable)&quot;</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>    <span class="fu">return</span>(jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(cache_path))</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>  }</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">&quot;GeneNetwork API unavailable and no cached data found for: &quot;</span>, cache_file)</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<div id="example-1-bxd-eqtl-data" class="section level1">
+<h1>Example 1: BxD eQTL Data</h1>
+<div id="list-available-bxd-expression-datasets" class="section level2">
+<h2>List Available BxD Expression Datasets</h2>
+<p>The BxD panel has dozens of expression datasets spanning multiple
+tissues (brain, liver, heart, kidney, etc.) and platforms (microarray,
+RNA-seq).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Fetch all datasets for the BXD group</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>bxd_datasets <span class="ot">&lt;-</span> <span class="fu">gn_fetch_or_cache</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="fu">paste0</span>(gn2_base, <span class="st">&quot;/datasets/BXD&quot;</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="st">&quot;bxd_datasets.json&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; GeneNetwork API: live data retrieved</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co"># The FullName column contains tissue and platform info</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co"># Filter for expression datasets related to heart/cardiac tissue</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>heart_datasets <span class="ot">&lt;-</span> bxd_datasets[<span class="fu">grepl</span>(<span class="st">&quot;Heart|Cardiac|heart|cardiac&quot;</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>                                     bxd_datasets<span class="sc">$</span>FullName), ]</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Total BXD datasets:&quot;</span>, <span class="fu">nrow</span>(bxd_datasets), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; Total BXD datasets: 408</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Heart-related datasets:&quot;</span>, <span class="fu">nrow</span>(heart_datasets), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; Heart-related datasets: 9</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co"># Preview heart datasets</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>display_cols <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(heart_datasets),</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>                          <span class="fu">c</span>(<span class="st">&quot;Id&quot;</span>, <span class="st">&quot;FullName&quot;</span>, <span class="st">&quot;Short_Abbreviation&quot;</span>))</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="fu">head</span>(heart_datasets[, display_cols, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt;                                                                  FullName   Id</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 276  EPFL/LISP BXD CD Heart Affy Mouse Gene 2.0 ST Gene Level (Jan14) RMA  485</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; 277 EPFL/LISP BXD HFD Heart Affy Mouse Gene 2.0 ST Gene Level (Jan14) RMA  486</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; 278  EPFL/LISP BXD CD Heart Affy Mouse Gene 2.0 ST Exon Level (Jan14) RMA  487</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; 279 EPFL/LISP BXD HFD Heart Affy Mouse Gene 2.0 ST Exon Level (Jan14) RMA  488</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt; 385            NHLBI BXD Young Adult Heart CD RNA-Seq (Nov20) TMP Log2 ** 1023</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; 386        NHLBI BXD Young Adult Heart CD CMS RNA-Seq (Nov20) TMP Log2 ** 1024</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt;                         Short_Abbreviation</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 276                   EPFL-LISPBXDHeCD0114</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; 277                  EPFL-LISPBXDHeHFD0114</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; 278                 EPFL-LISPBXDHeCDEx0114</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; 279                EPFL-LISPBXDHeHFDEx0114</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; 385 NHLBI_BXD_Young_Adult_Heart_CD_RNA-Seq</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; 386 NHLBI_BXD_Young_Adult_Heart_CD_CMS_RNA</span></span></code></pre></div>
+</div>
+<div id="query-traits-for-a-specific-gene" class="section level2">
+<h2>Query Traits for a Specific Gene</h2>
+<p>To check whether a candidate gene has eQTL evidence in the BxD panel,
+query traits by gene symbol within a specific dataset. The traits
+endpoint returns all probes/traits; we filter to our gene of
+interest.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Query Cisd2 expression traits in a BXD heart dataset</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>dataset_name <span class="ot">&lt;-</span> <span class="st">&quot;HC_M2_0606_P&quot;</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>gene_of_interest <span class="ot">&lt;-</span> <span class="st">&quot;Cisd2&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co"># Fetch traits (pre-filtered to Cisd2 in cached version)</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>cisd2_traits <span class="ot">&lt;-</span> <span class="fu">gn_fetch_or_cache</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="fu">paste0</span>(gn2_base, <span class="st">&quot;/traits/&quot;</span>, dataset_name),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="st">&quot;cisd2_traits.json&quot;</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; GeneNetwork API: live data retrieved</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co"># The live endpoint returns ALL traits; filter to our gene</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co"># The cached version is already pre-filtered</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(cisd2_traits) <span class="sc">&gt;</span> <span class="dv">20</span>) {</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="co"># Live data — filter by Symbol column</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  cisd2_traits <span class="ot">&lt;-</span> cisd2_traits[<span class="fu">grepl</span>(gene_of_interest, cisd2_traits<span class="sc">$</span>Symbol,</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>                                     <span class="at">ignore.case =</span> <span class="cn">TRUE</span>), ]</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a>}</span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Found&quot;</span>, <span class="fu">nrow</span>(cisd2_traits), <span class="st">&quot;probes/traits for&quot;</span>, gene_of_interest, <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; Found 4 probes/traits for Cisd2</span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="fu">print</span>(cisd2_traits[, <span class="fu">c</span>(<span class="st">&quot;Name&quot;</span>, <span class="st">&quot;Symbol&quot;</span>, <span class="st">&quot;Description&quot;</span>, <span class="st">&quot;Chr&quot;</span>, <span class="st">&quot;Mb&quot;</span>)])</span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt;               Name Symbol                Description Chr       Mb</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; 12747   1428441_at  Cisd2 CDGSH iron sulfur domain 2   3 135.4066</span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; 13589   1429283_at  Cisd2 CDGSH iron sulfur domain 2   3 135.4104</span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; 15298 1430992_s_at  Cisd2 CDGSH iron sulfur domain 2   3 135.4070</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; 15577   1431271_at  Cisd2 CDGSH iron sulfur domain 2   3 135.4254</span></span></code></pre></div>
+<p>Each row represents a microarray probe targeting Cisd2. The
+<code>LRS</code> column gives the likelihood ratio statistic for the
+best eQTL, and <code>Peak Chr</code> / <code>Peak Mb</code> indicate the
+genomic position of the peak association.</p>
+</div>
+<div id="retrieve-trait-detail" class="section level2">
+<h2>Retrieve Trait Detail</h2>
+<p>Get detailed information for a specific probe, including the additive
+effect and peak association statistics.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Get detail for the first (strongest) Cisd2 probe</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>probe_name <span class="ot">&lt;-</span> cisd2_traits<span class="sc">$</span>Name[<span class="dv">1</span>]</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>trait_detail <span class="ot">&lt;-</span> <span class="fu">gn_fetch_or_cache</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="fu">paste0</span>(gn2_base, <span class="st">&quot;/trait/&quot;</span>, dataset_name, <span class="st">&quot;/&quot;</span>, probe_name),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="st">&quot;cisd2_trait_detail.json&quot;</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; GeneNetwork API: live data retrieved</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Probe:&quot;</span>, trait_detail<span class="sc">$</span>name, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Probe: 1428441_at</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Gene:&quot;</span>, trait_detail<span class="sc">$</span>symbol, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Gene: Cisd2</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Description:&quot;</span>, trait_detail<span class="sc">$</span>description, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; Description: CDGSH iron sulfur domain 2</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Chromosome:&quot;</span>, trait_detail<span class="sc">$</span>chr, <span class="st">&quot;at&quot;</span>, trait_detail<span class="sc">$</span>mb, <span class="st">&quot;Mb</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; Chromosome: 3 at 135.4066 Mb</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Best LRS:&quot;</span>, <span class="fu">round</span>(trait_detail<span class="sc">$</span>lrs, <span class="dv">2</span>),</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>    <span class="st">&quot;(LOD ~&quot;</span>, <span class="fu">round</span>(trait_detail<span class="sc">$</span>lrs <span class="sc">/</span> <span class="fl">4.61</span>, <span class="dv">2</span>), <span class="st">&quot;)</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; Best LRS: 21.02 (LOD ~ 4.56 )</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Peak locus:&quot;</span>, trait_detail<span class="sc">$</span>locus, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; Peak locus: rs30689880</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Additive effect:&quot;</span>, <span class="fu">round</span>(trait_detail<span class="sc">$</span>additive, <span class="dv">4</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; Additive effect: -0.091</span></span></code></pre></div>
+</div>
+<div id="run-qtl-mapping-via-gemma" class="section level2">
+<h2>Run QTL Mapping via GEMMA</h2>
+<p>GeneNetwork2 can perform on-the-fly QTL mapping using GEMMA
+(Genome-wide Efficient Mixed Model Association). This returns LOD scores
+across the genome.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Request GEMMA mapping for the Cisd2 probe</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># Note: this endpoint may take 30-60 seconds to return results</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>gemma_url <span class="ot">&lt;-</span> <span class="fu">paste0</span>(gn2_base, <span class="st">&quot;/mapping?trait_id=&quot;</span>, probe_name,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>                    <span class="st">&quot;&amp;db=&quot;</span>, dataset_name,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>                    <span class="st">&quot;&amp;method=gemma&quot;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>gemma_raw <span class="ot">&lt;-</span> <span class="fu">gn_fetch_or_cache</span>(gemma_url, <span class="st">&quot;cisd2_gemma.json&quot;</span>, <span class="at">timeout_sec =</span> <span class="dv">120</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; GeneNetwork API: live data retrieved</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># The API returns a nested list; extract the data frame</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.data.frame</span>(gemma_raw)) {</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  gemma_results <span class="ot">&lt;-</span> gemma_raw</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>} <span class="cf">else</span> <span class="cf">if</span> (<span class="fu">is.list</span>(gemma_raw) <span class="sc">&amp;&amp;</span> <span class="fu">length</span>(gemma_raw) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  gemma_results <span class="ot">&lt;-</span> gemma_raw[[<span class="dv">1</span>]]</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>  gemma_results <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>}</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(gemma_results) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  eqtl_scan <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>    <span class="at">chr =</span> gemma_results<span class="sc">$</span>chr,</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>    <span class="at">pos =</span> gemma_results<span class="sc">$</span>Mb <span class="sc">*</span> <span class="fl">1e6</span>,  <span class="co"># Convert Mb to bp</span></span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>    <span class="at">pos_mb =</span> gemma_results<span class="sc">$</span>Mb,</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>    <span class="at">lod =</span> gemma_results<span class="sc">$</span>lod_score,</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>    <span class="at">p_value =</span> gemma_results<span class="sc">$</span>p_value,</span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>    <span class="at">marker =</span> gemma_results<span class="sc">$</span>name,</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>    <span class="at">gene_symbol =</span> gene_of_interest,</span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>    <span class="at">source =</span> <span class="st">&quot;GeneNetwork2_BxD&quot;</span></span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>  )</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>  <span class="co"># Summary of the scan</span></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Total markers scanned:&quot;</span>, <span class="fu">nrow</span>(eqtl_scan), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Significant positions (LOD &gt; 3):&quot;</span>, <span class="fu">sum</span>(eqtl_scan<span class="sc">$</span>lod <span class="sc">&gt;</span> <span class="dv">3</span>), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>  <span class="co"># Show the top peaks</span></span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>  top_peaks <span class="ot">&lt;-</span> eqtl_scan[<span class="fu">order</span>(<span class="sc">-</span>lod)][<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>  <span class="fu">print</span>(top_peaks[, .(chr, pos_mb, lod, p_value, marker)])</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>}</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a><span class="co">#&gt; Total markers scanned: 21056 </span></span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a><span class="co">#&gt; Significant positions (LOD &gt; 3): 252 </span></span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a><span class="co">#&gt;       chr   pos_mb      lod      p_value         marker</span></span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a><span class="co">#&gt;    &lt;char&gt;    &lt;num&gt;    &lt;num&gt;        &lt;num&gt;         &lt;char&gt;</span></span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a><span class="co">#&gt; 1:      3 132.2330 6.795907 1.599900e-07     rs30689880</span></span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a><span class="co">#&gt; 2:      3 129.4835 6.718934 1.910142e-07 rsm10000001734</span></span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a><span class="co">#&gt; 3:      3 129.5100 6.718934 1.910142e-07     rs30507350</span></span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a><span class="co">#&gt; 4:      3 129.6428 6.718934 1.910142e-07     rs30261132</span></span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a><span class="co">#&gt; 5:      3 129.6450 6.718934 1.910142e-07   UNC030323436</span></span></code></pre></div>
+<p>The strongest eQTL for Cisd2 maps to chromosome 3, near the gene’s
+own position — consistent with a <em>cis</em>-eQTL, which supports its
+candidacy in a QTL study targeting this region.</p>
+</div>
+</div>
+<div id="example-2-bxd-published-phenotypes" class="section level1">
+<h1>Example 2: BXD Published Phenotypes</h1>
+<p>GeneNetwork2 also hosts curated phenotype data for BXD strains.
+Published phenotypes can be accessed through the <code>BXDPublish</code>
+dataset, providing higher-level trait-QTL associations.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Fetch BXD published phenotype traits</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>bxd_pheno <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">gn_fetch_or_cache</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>    <span class="fu">paste0</span>(gn2_base, <span class="st">&quot;/traits/BXDPublish&quot;</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>    <span class="at">cache_file =</span> <span class="cn">NULL</span>  <span class="co"># no cache for this endpoint</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  )</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>}, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;BXD published phenotypes unavailable: &quot;</span>, e<span class="sc">$</span>message)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="cn">NULL</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>})</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; GeneNetwork API: live data retrieved</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(bxd_pheno) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(bxd_pheno) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Total BXD published phenotype traits:&quot;</span>, <span class="fu">nrow</span>(bxd_pheno), <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="co"># Show a few example traits</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>  display_cols <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(bxd_pheno), <span class="fu">c</span>(<span class="st">&quot;Id&quot;</span>, <span class="st">&quot;Name&quot;</span>, <span class="st">&quot;Description&quot;</span>, <span class="st">&quot;Symbol&quot;</span>))</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(bxd_pheno[, display_cols, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="dv">10</span>))</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;BXD published phenotype data not available via this API endpoint.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Visit https://genenetwork.org to browse phenotypes interactively.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>}</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; Total BXD published phenotype traits: 13757 </span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt;                                                                                                                                                                             Description</span></span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 1                                                                                                                         Original post publication description: Cerebellum weight [mg]</span></span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 2                                     Original post publication description: Central nervous system, morphology: Cerebellum weight after adjustment for covariance with brain size [mg]</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; 3                     Original post publication description: Central nervous system, morphology: Brain weight, male and female adult average, unadjusted for body weight, age, sex [mg]</span></span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 4                                                                                   Original post publication description: Central nervous system, morphology: Cerebellum volume [mm^3]</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 5                                          Original post publication description: Central nervous system, morphology: Cerebellum volume, adjusted for covariance with brain size [mm^3]</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="co">#&gt; 6                                   Original post publication description: Central nervous system, morphology: Cerebellum internal granule layer (IGL) volume without adjustment [mm^3]</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="co">#&gt; 7  Original post publication description: Central nervous system, morphology: Internal granule layer (IGL) of the cerebellum volume, adjusted for sex, age, body and brain weight [mm3]</span></span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="co">#&gt; 8            Original post publication description: Phencyclidine response (7.5 mg/kg ip), locomotor response, difference in activity (PCP minus saline) between 1 hr test periods [cm]</span></span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="co">#&gt; 9                                               Original post publication description: Phencyclidine response (7.5 mg/kg ip), locomotor activity from 0-60 min after PCP injection [cm]</span></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="co">#&gt; 10     Original post publication description: Saline control response (dose 0.9%, ip), locomotor activity from 0-60 min after injection (just prior to injection of phencyclidine) [cm]</span></span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="co">#&gt;       Id</span></span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a><span class="co">#&gt; 1  10001</span></span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="co">#&gt; 2  10002</span></span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="co">#&gt; 3  10003</span></span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="co">#&gt; 4  10004</span></span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a><span class="co">#&gt; 5  10005</span></span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a><span class="co">#&gt; 6  10006</span></span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="co">#&gt; 7  10007</span></span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a><span class="co">#&gt; 8  10008</span></span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="co">#&gt; 9  10009</span></span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a><span class="co">#&gt; 10 10010</span></span></code></pre></div>
+</div>
+<div id="integrating-genenetwork2-results-into-locuspackrat" class="section level1">
+<h1>Integrating GeneNetwork2 Results into locusPackRat</h1>
+<div id="create-a-locuspackrat-project" class="section level2">
+<h2>Create a locusPackRat Project</h2>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Create a temporary project with candidate genes</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>project_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;gn_demo_project&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>gene_input <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">gene_symbol =</span> <span class="fu">c</span>(<span class="st">&quot;Cisd2&quot;</span>, <span class="st">&quot;Pdlim5&quot;</span>, <span class="st">&quot;Manba&quot;</span>, <span class="st">&quot;Fhod3&quot;</span>, <span class="st">&quot;Myh7&quot;</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="fu">initPackRat</span>(</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  <span class="at">data =</span> gene_input,</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">mode =</span> <span class="st">&quot;gene&quot;</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">species =</span> <span class="st">&quot;mouse&quot;</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">genome =</span> <span class="st">&quot;mm39&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">project_dir =</span> project_dir,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">force =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>)</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; Initializing locusPackRat project...</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; Note: All data added to this project must use the mm39 genome build. Mixing genome builds will cause incorrect coordinate matching. Use rtracklayer::liftOver() to convert coordinates if needed.</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; Processing gene list...</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt;   Matched all 5 genes to coordinates</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; Generating orthology information...</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Saved gene data to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/input/genes.csv</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/input/orthology.csv</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Created config file: /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/config.json</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; locusPackRat project initialized successfully!</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; Mode: gene | Species: mouse | Genome: mm39</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; Processed 5 genes</span></span></code></pre></div>
+</div>
+<div id="gene-level-integration" class="section level2">
+<h2>Gene-Level Integration</h2>
+<p>Use <code>link_type = &quot;gene&quot;</code> when you have per-gene summary
+statistics (e.g., peak LOD score, cis/trans classification). Here we
+build a summary from the GEMMA results computed above.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Build a gene-level summary from the GEMMA scan</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># In a real analysis, you would loop over multiple candidate genes</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;eqtl_scan&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(eqtl_scan) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  peak_row <span class="ot">&lt;-</span> eqtl_scan[<span class="fu">which.max</span>(lod)]</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  gene_chr <span class="ot">&lt;-</span> <span class="fu">unique</span>(eqtl_scan[chr <span class="sc">==</span> peak_row<span class="sc">$</span>chr, chr])</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  eqtl_summary <span class="ot">&lt;-</span> <span class="fu">data.table</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">gene_symbol =</span> gene_of_interest,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="at">bxd_max_lod =</span> <span class="fu">round</span>(peak_row<span class="sc">$</span>lod, <span class="dv">2</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    <span class="at">bxd_peak_chr =</span> <span class="fu">as.character</span>(peak_row<span class="sc">$</span>chr),</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>    <span class="at">bxd_peak_mb =</span> <span class="fu">round</span>(peak_row<span class="sc">$</span>pos_mb, <span class="dv">2</span>),</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    <span class="at">bxd_cis_eqtl =</span> (<span class="fu">as.character</span>(peak_row<span class="sc">$</span>chr) <span class="sc">==</span> <span class="fu">as.character</span>(cisd2_traits<span class="sc">$</span>Chr[<span class="dv">1</span>])),</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>    <span class="at">gn2_dataset =</span> dataset_name</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  )</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="fu">print</span>(eqtl_summary)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="co"># Add to locusPackRat project</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="fu">addRatTable</span>(</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>    <span class="at">data =</span> eqtl_summary,</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>    <span class="at">table_name =</span> <span class="st">&quot;bxd_eqtl&quot;</span>,</span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>    <span class="at">abbreviation =</span> <span class="st">&quot;bxd&quot;</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>    <span class="at">link_type =</span> <span class="st">&quot;gene&quot;</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>    <span class="at">link_by =</span> <span class="st">&quot;gene_symbol&quot;</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>    <span class="at">project_dir =</span> project_dir</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  )</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>}</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;    gene_symbol bxd_max_lod bxd_peak_chr bxd_peak_mb bxd_cis_eqtl  gn2_dataset</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt;         &lt;char&gt;       &lt;num&gt;       &lt;char&gt;       &lt;num&gt;       &lt;lgcl&gt;       &lt;char&gt;</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; 1:       Cisd2         6.8            3      132.23         TRUE HC_M2_0606_P</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to mouse mm39 project...</span></span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt; Linking data by gene_symbol...</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl.csv</span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt; Linked 1 of 1 input rows</span></span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span></code></pre></div>
+</div>
+<div id="point-level-integration" class="section level2">
+<h2>Point-Level Integration</h2>
+<p>Use <code>link_type = &quot;region&quot;</code> when you have position-level
+QTL scan data that should be mapped to overlapping genes/regions.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Use the full scan data from GEMMA — keep significant hits only</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&quot;eqtl_scan&quot;</span>) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(eqtl_scan) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  significant_hits <span class="ot">&lt;-</span> eqtl_scan[lod <span class="sc">&gt;</span> <span class="dv">3</span>]</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Integrating&quot;</span>, <span class="fu">nrow</span>(significant_hits), <span class="st">&quot;significant markers</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  scan_for_project <span class="ot">&lt;-</span> significant_hits[, .(</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    <span class="at">chr =</span> <span class="fu">as.character</span>(chr),</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    <span class="at">start =</span> <span class="fu">as.integer</span>(pos),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    <span class="at">end =</span> <span class="fu">as.integer</span>(pos),</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    <span class="at">lod =</span> <span class="fu">round</span>(lod, <span class="dv">3</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    <span class="at">gene_symbol =</span> gene_symbol,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>    <span class="at">source =</span> source</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  )]</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="fu">addRatTable</span>(</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>    <span class="at">data =</span> scan_for_project,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>    <span class="at">table_name =</span> <span class="st">&quot;bxd_eqtl_scan&quot;</span>,</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>    <span class="at">abbreviation =</span> <span class="st">&quot;bxds&quot;</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>    <span class="at">link_type =</span> <span class="st">&quot;region&quot;</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>    <span class="at">link_by =</span> <span class="st">&quot;chr,start,end&quot;</span>,</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>    <span class="at">project_dir =</span> project_dir</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  )</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>}</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; Integrating 252 significant markers</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to mouse mm39 project...</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/Rtmpn1KyV3/gn_demo_project/.locusPackRat/supplementary/bxd_eqtl_scan.csv</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="co">#&gt; Linked 252 of 252 input rows</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span></code></pre></div>
+</div>
+<div id="project-state-after-integration" class="section level2">
+<h2>Project State After Integration</h2>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">listPackRatTables</span>(project_dir)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Found 2 supplementary table(s):</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;   - bxd_eqtl_scan: 252 rows with 6 cols, linked by &#39;chr,start,end&#39;</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt;   - bxd_eqtl: 1 rows with 7 cols, linked by &#39;gene_symbol&#39;</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;       table_name table_abbr link_type       link_by n_rows n_cols date_added</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt;           &lt;char&gt;     &lt;char&gt;    &lt;char&gt;        &lt;char&gt;  &lt;int&gt;  &lt;int&gt;     &lt;char&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 1: bxd_eqtl_scan       bxds    region chr,start,end    252      6 2026-02-18</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 2:      bxd_eqtl        bxd      gene   gene_symbol      1      7 2026-02-18</span></span></code></pre></div>
+</div>
+</div>
+<div id="alternative-gnapi-r-package" class="section level1">
+<h1>Alternative: GNapi R Package</h1>
+<p>The <a href="https://github.com/kbroman/GNapi">GNapi</a> R package by
+Karl Broman provides a more structured R client for the GeneNetwork2
+API. If you prefer a packaged interface:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Install GNapi</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># remotes::install_github(&quot;kbroman/GNapi&quot;)</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">library</span>(GNapi)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co"># List available species</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">list_species</span>()</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co"># List BxD datasets</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>bxd_datasets <span class="ot">&lt;-</span> <span class="fu">list_datasets</span>(<span class="st">&quot;BXD&quot;</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co"># Get trait data</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>trait_data <span class="ot">&lt;-</span> <span class="fu">get_trait</span>(<span class="st">&quot;HC_M2_0606_P&quot;</span>, <span class="st">&quot;1428441_at&quot;</span>)</span></code></pre></div>
+</div>
+<div id="tips-and-considerations" class="section level1">
+<h1>Tips and Considerations</h1>
+<ol style="list-style-type: decimal">
+<li><p><strong>API Rate Limits</strong>: GeneNetwork2 may impose rate
+limits. Add <code>Sys.sleep(1)</code> between requests when querying
+many genes.</p></li>
+<li><p><strong>Genome Build</strong>: GeneNetwork2 positions are
+typically in GRCm38/mm10 for mouse data. If your locusPackRat project
+uses mm39, convert coordinates using
+<code>rtracklayer::liftOver()</code> before integration (see the
+liftOver section in the main workflow vignette).</p></li>
+<li><p><strong>Dataset Selection</strong>: Choose tissue-appropriate
+datasets. For a cardiac study, prioritize heart expression datasets over
+brain or liver.</p></li>
+<li><p><strong>Cis vs Trans</strong>: A cis-eQTL (peak near the gene
+itself) is generally stronger evidence for candidacy than a
+trans-eQTL.</p></li>
+<li><p><strong>Cross-Validation</strong>: Compare GeneNetwork2 eQTL
+results with your own study-specific eQTL data and Open Targets QTL data
+for convergent evidence.</p></li>
+</ol>
+</div>
+<div id="session-info" class="section level1">
+<h1>Session Info</h1>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-conda-linux-gnu</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; Running under: Red Hat Enterprise Linux 9.7 (Plow)</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /nas/longleaf/home/bgural/mambaforge/envs/packrat_dev/lib/libopenblasp-r0.3.30.so;  LAPACK version 3.12.0</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt; time zone: America/New_York</span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; [1] jsonlite_2.0.0     httr_1.4.8         data.table_1.17.8  locusPackRat_0.6.1</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt;  [1] SummarizedExperiment_1.36.0 gtable_0.3.6               </span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a><span class="co">#&gt;  [3] rjson_0.2.23                xfun_0.56                  </span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a><span class="co">#&gt;  [5] bslib_0.10.0                ggplot2_4.0.2              </span></span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a><span class="co">#&gt;  [7] plyranges_1.26.0            rhdf5_2.50.2               </span></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="co">#&gt;  [9] Biobase_2.66.0              lattice_0.22-9             </span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="co">#&gt; [11] rhdf5filters_1.18.1         bitops_1.0-9               </span></span>
+<span id="cb13-33"><a href="#cb13-33" tabindex="-1"></a><span class="co">#&gt; [13] vctrs_0.7.1                 tools_4.5.2                </span></span>
+<span id="cb13-34"><a href="#cb13-34" tabindex="-1"></a><span class="co">#&gt; [15] generics_0.1.4              yulab.utils_0.2.4          </span></span>
+<span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a><span class="co">#&gt; [17] parallel_4.5.2              stats4_4.5.2               </span></span>
+<span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a><span class="co">#&gt; [19] curl_7.0.0                  tibble_3.3.1               </span></span>
+<span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a><span class="co">#&gt; [21] pkgconfig_2.0.3             Matrix_1.7-4               </span></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt; [23] ggplotify_0.1.3             plotgardener_1.12.0        </span></span>
+<span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a><span class="co">#&gt; [25] RColorBrewer_1.1-3          S7_0.2.1                   </span></span>
+<span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co">#&gt; [27] S4Vectors_0.44.0            lifecycle_1.0.5            </span></span>
+<span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a><span class="co">#&gt; [29] GenomeInfoDbData_1.2.13     compiler_4.5.2             </span></span>
+<span id="cb13-42"><a href="#cb13-42" tabindex="-1"></a><span class="co">#&gt; [31] farver_2.1.2                Rsamtools_2.22.0           </span></span>
+<span id="cb13-43"><a href="#cb13-43" tabindex="-1"></a><span class="co">#&gt; [33] Biostrings_2.74.1           codetools_0.2-20           </span></span>
+<span id="cb13-44"><a href="#cb13-44" tabindex="-1"></a><span class="co">#&gt; [35] GenomeInfoDb_1.42.3         htmltools_0.5.9            </span></span>
+<span id="cb13-45"><a href="#cb13-45" tabindex="-1"></a><span class="co">#&gt; [37] sass_0.4.10                 RCurl_1.98-1.17            </span></span>
+<span id="cb13-46"><a href="#cb13-46" tabindex="-1"></a><span class="co">#&gt; [39] yaml_2.3.12                 pillar_1.11.1              </span></span>
+<span id="cb13-47"><a href="#cb13-47" tabindex="-1"></a><span class="co">#&gt; [41] crayon_1.5.3                jquerylib_0.1.4            </span></span>
+<span id="cb13-48"><a href="#cb13-48" tabindex="-1"></a><span class="co">#&gt; [43] BiocParallel_1.40.2         cachem_1.1.0               </span></span>
+<span id="cb13-49"><a href="#cb13-49" tabindex="-1"></a><span class="co">#&gt; [45] DelayedArray_0.32.0         abind_1.4-8                </span></span>
+<span id="cb13-50"><a href="#cb13-50" tabindex="-1"></a><span class="co">#&gt; [47] tidyselect_1.2.1            zip_2.3.3                  </span></span>
+<span id="cb13-51"><a href="#cb13-51" tabindex="-1"></a><span class="co">#&gt; [49] digest_0.6.39               stringi_1.8.7              </span></span>
+<span id="cb13-52"><a href="#cb13-52" tabindex="-1"></a><span class="co">#&gt; [51] purrr_1.2.1                 restfulr_0.0.16            </span></span>
+<span id="cb13-53"><a href="#cb13-53" tabindex="-1"></a><span class="co">#&gt; [53] dplyr_1.2.0                 fastmap_1.2.0              </span></span>
+<span id="cb13-54"><a href="#cb13-54" tabindex="-1"></a><span class="co">#&gt; [55] grid_4.5.2                  SparseArray_1.6.2          </span></span>
+<span id="cb13-55"><a href="#cb13-55" tabindex="-1"></a><span class="co">#&gt; [57] cli_3.6.5                   magrittr_2.0.4             </span></span>
+<span id="cb13-56"><a href="#cb13-56" tabindex="-1"></a><span class="co">#&gt; [59] S4Arrays_1.6.0              XML_3.99-0.20              </span></span>
+<span id="cb13-57"><a href="#cb13-57" tabindex="-1"></a><span class="co">#&gt; [61] withr_3.0.2                 scales_1.4.0               </span></span>
+<span id="cb13-58"><a href="#cb13-58" tabindex="-1"></a><span class="co">#&gt; [63] UCSC.utils_1.2.0            rappdirs_0.3.4             </span></span>
+<span id="cb13-59"><a href="#cb13-59" tabindex="-1"></a><span class="co">#&gt; [65] rmarkdown_2.30              XVector_0.46.0             </span></span>
+<span id="cb13-60"><a href="#cb13-60" tabindex="-1"></a><span class="co">#&gt; [67] matrixStats_1.5.0           otel_0.2.0                 </span></span>
+<span id="cb13-61"><a href="#cb13-61" tabindex="-1"></a><span class="co">#&gt; [69] openxlsx_4.2.8.1            evaluate_1.0.5             </span></span>
+<span id="cb13-62"><a href="#cb13-62" tabindex="-1"></a><span class="co">#&gt; [71] knitr_1.51                  BiocIO_1.16.0              </span></span>
+<span id="cb13-63"><a href="#cb13-63" tabindex="-1"></a><span class="co">#&gt; [73] GenomicRanges_1.58.0        IRanges_2.40.1             </span></span>
+<span id="cb13-64"><a href="#cb13-64" tabindex="-1"></a><span class="co">#&gt; [75] rtracklayer_1.66.0          gridGraphics_0.5-1         </span></span>
+<span id="cb13-65"><a href="#cb13-65" tabindex="-1"></a><span class="co">#&gt; [77] rlang_1.1.7                 Rcpp_1.1.1                 </span></span>
+<span id="cb13-66"><a href="#cb13-66" tabindex="-1"></a><span class="co">#&gt; [79] glue_1.8.0                  BiocGenerics_0.52.0        </span></span>
+<span id="cb13-67"><a href="#cb13-67" tabindex="-1"></a><span class="co">#&gt; [81] strawr_0.0.92               Rhdf5lib_1.28.0            </span></span>
+<span id="cb13-68"><a href="#cb13-68" tabindex="-1"></a><span class="co">#&gt; [83] R6_2.6.1                    MatrixGenerics_1.18.1      </span></span>
+<span id="cb13-69"><a href="#cb13-69" tabindex="-1"></a><span class="co">#&gt; [85] GenomicAlignments_1.42.0    fs_1.6.6                   </span></span>
+<span id="cb13-70"><a href="#cb13-70" tabindex="-1"></a><span class="co">#&gt; [87] zlibbioc_1.52.0</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

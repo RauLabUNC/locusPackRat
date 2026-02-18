@@ -38,6 +38,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.claude/
 
 # Large test data (keep only small test data in inst/testdata)
 tests/integration/data/*.csv
@@ -49,5 +50,3 @@ tests/integration/data/*.csv
 # Documentation builds (local)
 docs/
 _site/
-/doc/
-/Meta/

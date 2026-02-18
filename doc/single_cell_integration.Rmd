@@ -1,0 +1,295 @@
+---
+title: "Single-Cell RNA-seq Integration for Cell-Type-Specific Candidate Evaluation"
+author: "Brian Gural, Todd Kimball, Anh Luu, Christoph D. Rau"
+date: "`r Sys.Date()`"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Single-Cell RNA-seq Integration for Cell-Type-Specific Candidate Evaluation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = requireNamespace("Seurat", quietly = TRUE) &&
+         requireNamespace("ggplot2", quietly = TRUE) &&
+         dir.exists("my_qtl_project/.locusPackRat")
+)
+```
+
+# Overview
+
+Bulk-tissue transcriptomic data, which form a common evidence layer in GWAS
+candidate gene prioritization, can obscure effects that are specific to
+particular cell types. A gene that appears broadly expressed in bulk tissue
+may in fact be restricted to a small cell population, and conversely, a gene
+with moderate bulk expression may be highly enriched in the disease-relevant
+cell type.
+
+This vignette demonstrates how to use single-cell RNA-seq (scRNA-seq) data
+to evaluate candidate genes identified by `locusPackRat` for cell-type-specific
+expression. Specifically, we show how to:
+
+1. Load a reference scRNA-seq dataset (Tabula Muris)
+2. Score candidate gene sets using Seurat's `AddModuleScore()`
+3. Visualize module scores across cell types
+4. Use the results to refine candidate gene prioritization
+
+All code chunks are set to `eval=FALSE` since the scRNA-seq analysis requires
+Seurat and reference data that may not be available in all environments.
+
+# Prerequisites
+
+```{r libraries}
+# Core packages
+library(locusPackRat)
+library(data.table)
+
+# scRNA-seq analysis
+library(Seurat)     # install from CRAN: install.packages("Seurat")
+library(ggplot2)
+```
+
+# Step 1: Extract Candidate Genes from locusPackRat
+
+After running a locusPackRat workflow, extract the prioritized candidate genes
+to evaluate for cell-type specificity.
+
+```{r extract_candidates}
+# Load the master gene sheet from a completed locusPackRat project
+# This assumes you have already run initPackRat(), addRatTable(), etc.
+master_genes <- fread("my_qtl_project/.locusPackRat/input/genes.csv")
+
+# Define candidate gene sets based on your prioritization criteria
+# These are example genes from the CC cardiac hypertrophy study
+cardiac_candidates <- c("Cisd2", "Pdlim5", "Manba", "Fhod3", "Myh7")
+
+# You can also define broader gene sets for comparison
+all_locus_genes <- master_genes$gene_symbol
+```
+
+# Step 2: Load a Reference scRNA-seq Dataset
+
+We use the Tabula Muris dataset as a reference atlas of mouse cell types.
+The Tabula Muris Senis (aged) dataset includes heart tissue with annotated
+cardiomyocytes, fibroblasts, endothelial cells, and immune cells.
+
+## Option A: Load from Tabula Muris (10X Genomics data)
+
+```{r load_tabula_muris}
+# Download Tabula Muris heart data (10X Genomics)
+# Data available from: https://tabula-muris.ds.czbiohub.org/
+# Or via the TabulaMurisData Bioconductor package
+
+# Using pre-downloaded .h5 or .rds file:
+heart_data <- Read10X(data.dir = "path/to/tabula_muris/Heart-10X_P7_4/")
+
+# Create Seurat object
+heart_seurat <- CreateSeuratObject(
+  counts = heart_data,
+  project = "TabulaMuris_Heart",
+  min.cells = 3,
+  min.features = 200
+)
+
+# Standard preprocessing
+heart_seurat <- NormalizeData(heart_seurat)
+heart_seurat <- FindVariableFeatures(heart_seurat, nfeatures = 2000)
+heart_seurat <- ScaleData(heart_seurat)
+heart_seurat <- RunPCA(heart_seurat)
+heart_seurat <- FindNeighbors(heart_seurat, dims = 1:20)
+heart_seurat <- FindClusters(heart_seurat, resolution = 0.5)
+heart_seurat <- RunUMAP(heart_seurat, dims = 1:20)
+```
+
+## Option B: Load Pre-Processed Seurat Object
+
+If you have a pre-processed Seurat object with cell type annotations:
+
+```{r load_preprocessed}
+# Load a pre-processed Seurat object with cell type annotations
+heart_seurat <- readRDS("path/to/heart_annotated_seurat.rds")
+
+# Check available cell type annotations
+table(heart_seurat$cell_type)
+```
+
+# Step 3: Score Candidate Genes with AddModuleScore
+
+Seurat's `AddModuleScore()` calculates per-cell enrichment scores for a set
+of genes, controlling for expression level and gene set size. This allows us
+to ask: "Are our candidate genes collectively enriched in specific cell types?"
+
+```{r module_scores}
+# Define gene lists for module scoring
+# Convert mouse gene symbols to match the Seurat object's feature names
+candidate_list <- list(
+  cardiac_candidates = cardiac_candidates
+)
+
+# Calculate module scores
+heart_seurat <- AddModuleScore(
+  object = heart_seurat,
+  features = candidate_list,
+  name = "candidate_score"
+)
+
+# The score is added as a metadata column: "candidate_score1"
+# Higher scores indicate stronger collective expression of the candidate genes
+summary(heart_seurat$candidate_score1)
+```
+
+# Step 4: Visualize Module Scores by Cell Type
+
+## UMAP Visualization
+
+```{r plot_umap}
+# Plot module score on UMAP
+FeaturePlot(
+  heart_seurat,
+  features = "candidate_score1",
+  cols = c("lightgrey", "blue", "red"),
+  pt.size = 0.5
+) +
+  ggtitle("Candidate Gene Module Score") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+## Violin Plot by Cell Type
+
+```{r plot_violin}
+# Violin plot of module score by cell type
+VlnPlot(
+  heart_seurat,
+  features = "candidate_score1",
+  group.by = "cell_type",
+  pt.size = 0
+) +
+  ggtitle("Candidate Gene Enrichment by Cell Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Individual Gene Expression
+
+Examine expression of individual candidate genes across cell types to
+identify which candidates drive the module score.
+
+```{r plot_individual_genes}
+# Dot plot of individual candidate gene expression by cell type
+DotPlot(
+  heart_seurat,
+  features = cardiac_candidates,
+  group.by = "cell_type"
+) +
+  RotatedAxis() +
+  ggtitle("Individual Candidate Gene Expression by Cell Type")
+```
+
+# Step 5: Quantify Cell-Type Specificity
+
+Calculate summary statistics for candidate gene expression across cell types
+to produce a quantitative ranking.
+
+```{r quantify_specificity}
+# Extract expression matrix for candidate genes
+expr_matrix <- GetAssayData(heart_seurat, slot = "data")
+candidates_in_data <- intersect(cardiac_candidates, rownames(expr_matrix))
+
+if (length(candidates_in_data) > 0) {
+  # Calculate mean expression per cell type per gene
+  cell_type_expr <- data.table(
+    cell_type = heart_seurat$cell_type,
+    as.data.table(t(as.matrix(expr_matrix[candidates_in_data, , drop = FALSE])))
+  )
+
+  # Aggregate by cell type
+  mean_expr <- cell_type_expr[, lapply(.SD, mean), by = cell_type,
+                               .SDcols = candidates_in_data]
+
+  # Calculate percentage of cells expressing each gene (> 0) per cell type
+  pct_expr <- cell_type_expr[, lapply(.SD, function(x) mean(x > 0) * 100),
+                              by = cell_type, .SDcols = candidates_in_data]
+
+  cat("Mean expression by cell type:\n")
+  print(mean_expr)
+
+  cat("\nPercent cells expressing (> 0) by cell type:\n")
+  print(pct_expr)
+}
+```
+
+# Step 6: Integrate Results into locusPackRat
+
+The cell-type specificity results can be formatted and added to a
+locusPackRat project as an additional evidence layer.
+
+```{r add_to_project}
+# Create a summary table of cell-type specificity for each candidate
+specificity_summary <- data.table(
+  gene_symbol = candidates_in_data,
+  cardiomyocyte_expr = as.numeric(mean_expr[cell_type == "cardiomyocyte",
+                                             ..candidates_in_data]),
+  fibroblast_expr = as.numeric(mean_expr[cell_type == "fibroblast",
+                                          ..candidates_in_data]),
+  endothelial_expr = as.numeric(mean_expr[cell_type == "endothelial cell",
+                                           ..candidates_in_data]),
+  immune_expr = as.numeric(mean_expr[cell_type == "immune cell",
+                                      ..candidates_in_data])
+)
+
+# Calculate a simple specificity index
+# Ratio of target cell type expression to mean of all other cell types
+specificity_summary[, cardiomyocyte_specificity :=
+  cardiomyocyte_expr / rowMeans(.SD),
+  .SDcols = c("fibroblast_expr", "endothelial_expr", "immune_expr")]
+
+# Add to locusPackRat project
+addRatTable(
+  data = specificity_summary,
+  table_name = "sc_cell_type_expression",
+  abbreviation = "sc",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  project_dir = "my_qtl_project"
+)
+```
+
+# Tips and Considerations
+
+1. **Reference Dataset Selection**: Choose a scRNA-seq dataset from the tissue
+   most relevant to your phenotype. Tabula Muris provides broad tissue coverage;
+   tissue-specific atlases (e.g., the Human Cell Atlas) may offer finer resolution.
+
+2. **Species Matching**: If your locusPackRat project uses mouse gene symbols,
+   ensure the scRNA-seq reference also uses mouse symbols. For cross-species
+   comparisons, use the orthology table generated by `initPackRat()`.
+
+3. **Module Score Interpretation**: `AddModuleScore()` returns relative scores
+   that control for average expression level. A high score means the gene set
+   is more expressed than expected given the cells' overall transcriptional
+   activity. Scores are most useful for comparing across cell types within the
+   same dataset, not across datasets.
+
+4. **Statistical Testing**: For formal statistical comparisons of module scores
+   between cell types, consider using a Wilcoxon rank-sum test or permutation
+   testing rather than relying solely on visual inspection.
+
+5. **Scaling to Many Loci**: For studies with many candidate loci, you can
+   create separate module scores for each locus and compare cell-type enrichment
+   patterns across loci to identify shared or locus-specific cell type involvement.
+
+6. **Single-Cell QTL Data**: As single-cell eQTL (sceQTL) datasets grow,
+   consider querying these through `queryOpenTargetsQTL()` with
+   `study_types = c("sceqtl", "scpqtl")` for variant-level cell-type-specific
+   evidence that complements the expression-based approach shown here.
+
+# Session Info
+
+```{r session_info}
+sessionInfo()
+```
