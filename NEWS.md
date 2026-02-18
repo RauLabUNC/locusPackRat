@@ -1,3 +1,23 @@
+# locusPackRat 0.6.2
+
+## New Features
+- `buildPacket()`: new exported function that zips the contents of `.locusPackRat/output/` into a single shareable archive with an auto-generated `README.md` summarizing project metadata, supplementary data sources, and included files
+- `buildPacket(include_supplementary)`: optionally bundles raw supplementary CSVs from `.locusPackRat/supplementary/` into the zip. Accepts `FALSE` (default), `TRUE` (all tables), or a character vector of specific table names. Files are placed in a `supplementary/` subdirectory. Warns on missing table names.
+- Auto-generated README in packets includes an "Included Supplementary Files" table when supplementary CSVs are bundled
+
+## Improvements
+- Vignette `genenetwork_qtl`: chunks now evaluate by default with cached API fallback when GeneNetwork2 is unavailable
+- Vignette `single_cell_integration`: conditional evaluation no longer requires a pre-existing project directory; only Seurat and ggplot2 are needed
+
+## Documentation
+- Vignette `locusPackRat_workflow`: added "Building Shareable Packets" section with `buildPacket()` usage and "Including Supplementary CSVs" examples
+
+## Package Metadata
+- Exported `buildPacket()` in NAMESPACE
+- Added `data-raw` to `.Rbuildignore`
+
+---
+
 # locusPackRat 0.6.1
 
 ## Bug Fixes

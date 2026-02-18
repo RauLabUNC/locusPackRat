@@ -59,7 +59,7 @@ Throughout this vignette, we draw on the following data types:
 - **Open Targets disease associations**: Human gene-disease links, genetic constraints (gnomAD), and drug tractability data, queried via `queryOpenTargets()`
 - **Study-specific data**: User-supplied tables (e.g., differential expression, eQTL, mutations) added via `addRatTable()`
 
-For molecular QTL data from Open Targets (eQTL, pQTL, sQTL), see the `region_qtl_opentargets` vignette. For model organism QTL data from GeneNetwork2, see the `genenetwork_qtl` vignette.
+For molecular QTL data from Open Targets (eQTL, pQTL, sQTL), see the `region_qtl_opentargets` vignette. For model organism QTL data from GeneNetwork2, see the `genenetwork_qtl` vignette. For cell-type-specific evaluation of candidate genes using single-cell RNA-seq, see the `single_cell_integration` vignette.
 
 # Installation
 
@@ -266,6 +266,9 @@ initPackRat(
 ```
 
 ### Add Supplementary Data
+
+In region mode, supplementary data is linked to the project using `addRatTable()` with `link_type = "region"` and `link_by = "chr,start,end"`. Region-level linking assigns each row of the supplementary table to every gene whose coordinates overlap the row's genomic interval. This is appropriate for positional data such as QTL scan results, variant calls, or ChIP-seq peaks. For gene-level data (e.g., summary statistics per gene), use `link_type = "gene"` with `link_by = "gene_symbol"` as shown in the gene mode section above.
+
 #### Add QTL Data and CC Founder Information
 
 ```{r add_QTL_and_Founder_Information}
@@ -329,9 +332,11 @@ addRatTable(
 
 #### Add mouseMine and Open Targets data
 
+`queryMouseMine()` queries the MouseMine API (hosted by MGI) and returns all gene-phenotype associations for genes in the project, stored as a supplementary table named `mouseMine`. `queryOpenTargets()` queries the Open Targets GraphQL API for human disease associations, gnomAD genetic constraint scores, and drug tractability assessments; for mouse projects, genes are automatically mapped to human orthologs before querying. Results are stored as separate supplementary tables (`openTargets_diseases`, `openTargets_constraints`, `openTargets_tractability`). For molecular QTL data (eQTL, pQTL, single-cell QTL), see the `region_qtl_opentargets` vignette.
+
 ```{r add_mouseMine_and_Open_Targets_data_QTL}
 queryMouseMine(project_dir = "qtl_analysis")
-queryOpenTargets(project_dir = "qtl_analysis") 
+queryOpenTargets(project_dir = "qtl_analysis")
 ```
 
 ### Examine Package Structure Before Creating Outputs
@@ -517,9 +522,11 @@ addRatTable(
 
 #### Add mouseMine and Open Targets data
 
+As in the QTL example above, `queryMouseMine()` and `queryOpenTargets()` retrieve gene-phenotype and gene-disease annotations for all genes overlapping the ATAC-seq peak regions. These annotations are stored as supplementary tables and merged with the peak-level data during output generation.
+
 ```{r add_mouseMine_and_Open_Targets_data_ATAC}
 queryMouseMine(project_dir = "atacseq_analysis")
-queryOpenTargets(project_dir = "atacseq_analysis") 
+queryOpenTargets(project_dir = "atacseq_analysis")
 ```
 
 ### Examine Package Structure Before Creating Output
@@ -574,6 +581,57 @@ makeGeneSheet(
   project_dir = "atacseq_analysis"
 )
 ```
+
+# Building Shareable Packets
+
+Once an analysis is complete, `buildPacket()` bundles everything in `.locusPackRat/output/` into a single zip archive with an auto-generated `README.md` summarizing the project metadata, supplementary data sources, and included files. This makes it easy to share results with collaborators who may not have R installed.
+
+```{r build_packet_qtl, message=TRUE}
+# Package the QTL analysis for sharing
+buildPacket(project_dir = "qtl_analysis", overwrite = TRUE)
+```
+
+The zip contains every file from the project's output directory (Excel workbooks, locus zoom plots, CSVs) plus a README with project metadata drawn from `config.json` and `listPackRatTables()`.
+
+You can also customize the output location and filename:
+
+```{r build_packet_custom, eval=FALSE}
+# Write to a specific directory with a custom name
+buildPacket(
+  project_dir = "rnaseq_analysis",
+  output_path = "~/shared_results",
+  filename = "rnaseq_v2_packet.zip",
+  overwrite = TRUE
+)
+
+# Skip the README if you prefer
+buildPacket(project_dir = "atacseq_analysis", include_readme = FALSE)
+```
+
+### Including Supplementary CSVs
+
+By default, `buildPacket()` bundles only the output files (Excel workbooks, plots, etc.).
+Set `include_supplementary = TRUE` to also include the raw supplementary CSV files
+from `.locusPackRat/supplementary/`, or pass a character vector to include specific tables:
+
+```{r build_packet_supplementary, eval=FALSE}
+# Include all supplementary CSVs
+buildPacket(
+  project_dir = "qtl_analysis",
+  include_supplementary = TRUE,
+  overwrite = TRUE
+)
+
+# Include only specific supplementary tables
+buildPacket(
+  project_dir = "qtl_analysis",
+  include_supplementary = c("mouseMine", "openTargets_diseases"),
+  overwrite = TRUE
+)
+```
+
+Supplementary files are placed in a `supplementary/` subdirectory within the zip, and the
+auto-generated README lists them in a separate "Included Supplementary Files" table.
 
 # Working Across Species and Genome Builds
 

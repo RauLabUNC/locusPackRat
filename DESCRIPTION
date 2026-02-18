@@ -1,7 +1,7 @@
 Package: locusPackRat
 Type: Package
 Title: Flexible R Package for Managing Genomic Analysis Projects
-Version: 0.6.1
+Version: 0.6.2
 Authors@R: c(
     person("Brian", "Gural", email = "bgural@unc.edu", role = c("aut", "cre")),
     person("Todd", "Kimball", role = "aut"),
@@ -43,6 +43,7 @@ Suggests:
     org.Mm.eg.db,
     liftOver,
     Seurat,
+    ggplot2,
     TxDb.Hsapiens.UCSC.hg38.knownGene,
     org.Hs.eg.db
 RoxygenNote: 7.3.3

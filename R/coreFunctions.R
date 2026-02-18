@@ -400,6 +400,153 @@ removeRatTable <- function(table_name, project_dir = ".") {
   invisible(TRUE)
 }
 
+#' Build Shareable Packet from locusPackRat Project
+#'
+#' Zips the contents of \code{.locusPackRat/output/} with an auto-generated
+#' \code{README.md} summarizing the project, producing a single shareable archive.
+#' Optionally includes raw supplementary CSV files from \code{.locusPackRat/supplementary/}.
+#'
+#' @param project_dir Character: Path to project directory containing .locusPackRat
+#' @param output_path Character: Directory where the zip will be written (default: \code{project_dir})
+#' @param filename Character: Name for the zip file (default: \code{"{basename}_packet.zip"})
+#' @param include_readme Logical: Whether to include an auto-generated README.md (default: TRUE)
+#' @param include_supplementary Logical or character vector: \code{FALSE} (default) includes
+#'   only output files; \code{TRUE} includes all supplementary CSVs; a character vector
+#'   (e.g., \code{c("ot_diseases", "mouse_phenotypes")}) includes only the named tables.
+#'   Supplementary files are placed in a \code{supplementary/} subdirectory in the zip.
+#' @param overwrite Logical: Whether to overwrite an existing zip file (default: FALSE)
+#'
+#' @return Invisible path to the created zip file
+#'
+#' @examples
+#' \dontrun{
+#' # Build a packet from the current project
+#' buildPacket(project_dir = "my_analysis")
+#'
+#' # Custom output location
+#' buildPacket(project_dir = "my_analysis", output_path = "~/shared", overwrite = TRUE)
+#'
+#' # Include all supplementary CSVs
+#' buildPacket(project_dir = "my_analysis", include_supplementary = TRUE)
+#'
+#' # Include only specific supplementary tables
+#' buildPacket(project_dir = "my_analysis",
+#'             include_supplementary = c("ot_diseases", "mouse_phenotypes"))
+#' }
+#'
+#' @importFrom jsonlite read_json
+#' @importFrom utils zip
+#'
+#' @export
+buildPacket <- function(project_dir = ".",
+                        output_path = NULL,
+                        filename = NULL,
+                        include_readme = TRUE,
+                        include_supplementary = FALSE,
+                        overwrite = FALSE) {
+  # Validate project
+  packrat_dir <- file.path(project_dir, ".locusPackRat")
+  if (!dir.exists(packrat_dir)) {
+    stop("No .locusPackRat directory found. Run initPackRat() first.")
+  }
+
+  config_file <- file.path(packrat_dir, "config.json")
+  if (!file.exists(config_file)) {
+    stop("Config file not found. Project may be corrupted.")
+  }
+  config <- jsonlite::read_json(config_file)
+
+  # Check output directory has files
+  output_dir <- file.path(packrat_dir, "output")
+  if (!dir.exists(output_dir)) {
+    stop("No output directory found. Run makeGeneSheet() first to generate output.")
+  }
+  output_files <- list.files(output_dir, full.names = TRUE)
+  if (length(output_files) == 0) {
+    stop("Output directory is empty. Run makeGeneSheet() first to generate output.")
+  }
+
+  # Resolve output path and filename
+  if (is.null(output_path)) output_path <- project_dir
+  if (!dir.exists(output_path)) {
+    stop(sprintf("Output path does not exist: %s", output_path))
+  }
+  if (is.null(filename)) {
+    filename <- paste0(basename(normalizePath(project_dir)), "_packet.zip")
+  }
+  zip_path <- file.path(normalizePath(output_path), filename)
+
+  # Check overwrite
+
+  if (file.exists(zip_path) && !overwrite) {
+    stop(sprintf("File already exists: %s\nSet overwrite = TRUE to replace it.", zip_path))
+  }
+
+  # Create staging directory
+  staging_dir <- file.path(tempdir(), paste0("packrat_packet_", format(Sys.time(), "%Y%m%d%H%M%S")))
+  dir.create(staging_dir, recursive = TRUE)
+  on.exit(unlink(staging_dir, recursive = TRUE), add = TRUE)
+
+  # Copy output files to staging
+  file.copy(output_files, staging_dir)
+
+  # Handle supplementary files
+  supp_copied <- NULL
+  if (!identical(include_supplementary, FALSE)) {
+    supp_dir <- file.path(packrat_dir, "supplementary")
+    if (!dir.exists(supp_dir)) {
+      warning("No supplementary directory found -- skipping supplementary files.")
+    } else {
+      all_csvs <- list.files(supp_dir, pattern = "\\.csv$", full.names = TRUE)
+      if (is.character(include_supplementary)) {
+        # Include only named tables
+        requested <- paste0(include_supplementary, ".csv")
+        matched <- all_csvs[basename(all_csvs) %in% requested]
+        missing <- setdiff(requested, basename(matched))
+        if (length(missing) > 0) {
+          warning(sprintf("Supplementary table(s) not found: %s",
+                          paste(sub("\\.csv$", "", missing), collapse = ", ")))
+        }
+        all_csvs <- matched
+      }
+      if (length(all_csvs) > 0) {
+        staging_supp <- file.path(staging_dir, "supplementary")
+        dir.create(staging_supp, recursive = TRUE)
+        file.copy(all_csvs, staging_supp)
+        supp_copied <- all_csvs
+      }
+    }
+  }
+
+  # Generate README
+  if (include_readme) {
+    readme_lines <- .generatePacketReadme(config, output_files, project_dir,
+                                          supp_files = supp_copied)
+    writeLines(readme_lines, file.path(staging_dir, "README.md"))
+  }
+
+  # Create zip from staging directory
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(staging_dir)
+
+  files_to_zip <- list.files(".", full.names = FALSE, recursive = TRUE)
+
+  # Ensure zip command is available (R_ZIPCMD may be empty on some systems)
+  zip_cmd <- Sys.getenv("R_ZIPCMD")
+  if (!nzchar(zip_cmd)) {
+    zip_cmd <- Sys.which("zip")
+    if (!nzchar(zip_cmd)) stop("Cannot find a 'zip' program. Install zip or set R_ZIPCMD.")
+  }
+  utils::zip(zip_path, files = files_to_zip, zip = zip_cmd)
+
+  zip_size <- .formatFileSize(file.info(zip_path)$size)
+  message(sprintf("Packet created: %s (%s)", zip_path, zip_size))
+  message(sprintf("Contains %d file(s)", length(files_to_zip)))
+
+  invisible(zip_path)
+}
+
 #' List Supplementary Tables in locusPackRat Project
 #'
 #' Returns information about available supplementary tables in a project
@@ -951,6 +1098,117 @@ makeGeneSheet <- function(filter_expr = NULL,
 }
 
 # ========== Helper Functions ==========
+
+#' Generate README.md Content for a Packet
+#' @param config List: parsed config.json
+#' @param output_files Character: full paths to output files
+#' @param project_dir Character: path to project directory
+#' @param supp_files Character or NULL: full paths to included supplementary CSVs
+#' @return Character vector of markdown lines
+#' @noRd
+.generatePacketReadme <- function(config, output_files, project_dir, supp_files = NULL) {
+  safe <- function(x) if (is.null(x)) "unknown" else as.character(x)
+
+  lines <- c(
+    sprintf("# %s -- locusPackRat Packet", basename(normalizePath(project_dir))),
+    "",
+    "## Project Info",
+    "",
+    "| Field | Value |",
+    "| ----- | ----- |",
+    sprintf("| Mode | %s |", safe(config$mode)),
+    sprintf("| Species | %s |", safe(config$species)),
+    sprintf("| Genome | %s |", safe(config$genome)),
+    sprintf("| Entries | %s |", safe(config$n_entries)),
+    sprintf("| Initialized | %s |", safe(config$initialization_date)),
+    sprintf("| Package version | %s |", safe(config$package_version)),
+    ""
+  )
+
+  # Supplementary data sources
+  tbl_info <- tryCatch(
+    suppressMessages(listPackRatTables(project_dir)),
+    error = function(e) NULL
+  )
+  if (!is.null(tbl_info) && nrow(tbl_info) > 0) {
+    lines <- c(lines,
+      "## Supplementary Data Sources",
+      "",
+      "| Table | Abbreviation | Link Type | Rows | Cols | Date Added |",
+      "| ----- | ------------ | --------- | ---- | ---- | ---------- |"
+    )
+    for (i in seq_len(nrow(tbl_info))) {
+      r <- tbl_info[i, ]
+      lines <- c(lines, sprintf("| %s | %s | %s | %s | %s | %s |",
+        r$table_name,
+        ifelse(is.na(r$table_abbr), "-", r$table_abbr),
+        ifelse(is.na(r$link_type), "-", r$link_type),
+        ifelse(is.na(r$n_rows), "-", as.character(r$n_rows)),
+        ifelse(is.na(r$n_cols), "-", as.character(r$n_cols)),
+        ifelse(is.na(r$date_added), "-", r$date_added)
+      ))
+    }
+    lines <- c(lines, "")
+  }
+
+  # Included supplementary files (bundled in the zip)
+  if (!is.null(supp_files) && length(supp_files) > 0) {
+    sinfo <- file.info(supp_files)
+    lines <- c(lines,
+      "## Included Supplementary Files",
+      "",
+      "| File | Size |",
+      "| ---- | ---- |"
+    )
+    for (i in seq_along(supp_files)) {
+      lines <- c(lines, sprintf("| supplementary/%s | %s |",
+        basename(supp_files[i]),
+        .formatFileSize(sinfo$size[i])
+      ))
+    }
+    lines <- c(lines, "")
+  }
+
+  # Included files
+  finfo <- file.info(output_files)
+  lines <- c(lines,
+    "## Included Files",
+    "",
+    "| File | Size |",
+    "| ---- | ---- |"
+  )
+  for (i in seq_along(output_files)) {
+    lines <- c(lines, sprintf("| %s | %s |",
+      basename(output_files[i]),
+      .formatFileSize(finfo$size[i])
+    ))
+  }
+
+  # Footer
+  pkg_version <- tryCatch(
+    as.character(packageVersion("locusPackRat")),
+    error = function(e) "dev"
+  )
+  lines <- c(lines, "",
+    "---",
+    sprintf("*Generated by locusPackRat %s on %s*", pkg_version, Sys.time())
+  )
+
+  lines
+}
+
+#' Format Bytes to Human-Readable Size
+#' @param bytes Numeric: file size in bytes
+#' @return Character string (e.g., "1.2 MB")
+#' @noRd
+.formatFileSize <- function(bytes) {
+  if (is.na(bytes) || bytes == 0) return("0 B")
+  units <- c("B", "KB", "MB", "GB")
+  exp <- min(floor(log(bytes, 1024)), length(units) - 1)
+  val <- bytes / (1024^exp)
+  if (exp == 0) return(sprintf("%d B", as.integer(val)))
+  sprintf("%.1f %s", val, units[exp + 1])
+}
 
 #' Process Gene Input Data
 #' @noRd
