@@ -853,7 +853,7 @@ addRatTable(
 # Session Information
 
 ```{r session}
-sessionInfo()
+tryCatch(sessionInfo(), error = function(e) message("sessionInfo() unavailable"))
 ```
 
 

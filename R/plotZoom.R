@@ -73,7 +73,7 @@
 #' @importFrom jsonlite read_json
 #' @importFrom grDevices pdf png dev.off
 #' @importFrom tools file_ext
-#' @importFrom plotgardener pageCreate plotManhattan plotGenes plotRanges plotText plotSignal annoYaxis annoHighlight
+#'
 #' @importFrom utils capture.output
 #'
 #' @examples
@@ -122,6 +122,13 @@ generateLocusZoomPlot <- function(
     font_family = NULL
 ) {
     # 1. SETUP & CONFIG LOAD ----------------------------------------------
+    if (!requireNamespace("plotgardener", quietly = TRUE)) {
+      stop(
+        "Package 'plotgardener' is required for locus zoom plots.\n",
+        "Install with: BiocManager::install('plotgardener')"
+      )
+    }
+
     packrat_dir <- file.path(project_dir, ".locusPackRat")
     if (!dir.exists(packrat_dir)) stop("Project not initialized.")
     
@@ -389,79 +396,6 @@ generateLocusZoomPlot <- function(
     file = NULL
   )
   res
-}
-
-#' Standardize chromosome column to character
-#' @noRd
-.standardize_chrom <- function(dt) {
-  if (is.null(dt) || nrow(dt) == 0) return(dt)
-
-  # Ensure chr column is character (plotgardener requires this)
-  if ("chr" %in% names(dt)) {
-    dt[, chr := as.character(chr)]
-  }
-
-  # Create chrom column for internal filtering (same value, no prefix needed)
-  if (!"chrom" %in% names(dt) && "chr" %in% names(dt)) {
-    dt[, chrom := chr]
-  }
-
-  return(dt)
-}
-
-#' Internal module to render Genes
-#' @noRd
-.render_genes <- function(gene_list, highlights, params, x, y, w, h) {
-  
-  # Determine labeling priority:
-  # 1. Highlighted genes (if any)
-  # 2. Genes listed in the region (if available)
-  # 3. Plotgardener defaults
-  
-  gene_order <- NULL
-  
-  if (!is.null(highlights)) {
-    # Start with highlights
-    gene_order <- highlights$gene
-    
-    # Append the rest of the known genes in the region (if we have them)
-    if (!is.null(gene_list)) {
-      remaining <- setdiff(gene_list, highlights$gene)
-      gene_order <- c(gene_order, remaining)
-    }
-  } else if (!is.null(gene_list)) {
-    # No highlights, just use the region list order
-    gene_order <- gene_list
-  }
-  
-  # Add "chr" prefix if needed
-  params$chrom <- if (grepl("^chr", params$chrom)) {
-    params$chrom
-  } else {
-    paste0("chr", params$chrom)
-  }
-  # Plot Genes
-  # plotgardener pulls coordinates from the 'assembly' in params,
-  # so we don't need to pass a dataframe of coordinates here.
-  plt <- plotgardener::plotGenes(
-    params = params,
-    x = x, y = y, width = w, height = h,
-    just = c("left", "top"),
-    geneOrder = gene_order,
-    geneHighlights = highlights,
-    geneBackground = "grey",
-    fontsize = 8,
-    default.units = "inches"
-  )
-  
-  # Add Genome Label below genes
-  plotgardener::annoGenomeLabel(
-    plot = plt, x = x, y = y + h + 0.2,
-    scale = "Mb", just = c("left", "top"),
-    default.units = "inches"
-  )
-  
-  return(y + h + 0.5)
 }
 
 # Standardize chromosome column in a data.table:

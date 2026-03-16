@@ -396,7 +396,7 @@ corr <- run_correlation("HC_M2_0606_P", "BXD", "1428441_at")
 # Session Info
 
 ```{r session_info}
-sessionInfo()
+tryCatch(sessionInfo(), error = function(e) message("sessionInfo() unavailable"))
 ```
 
 ```{r cleanup, include = FALSE}

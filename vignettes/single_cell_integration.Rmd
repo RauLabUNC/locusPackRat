@@ -338,7 +338,7 @@ downstream prioritization.
 # Session Info
 
 ```{r session_info}
-sessionInfo()
+tryCatch(sessionInfo(), error = function(e) message("sessionInfo() unavailable"))
 ```
 
 ```{r cleanup, include = FALSE}

@@ -1,0 +1,186 @@
+---
+title: "New UX Features in locusPackRat v0.7"
+author: "Brian Gural"
+date: "`r Sys.Date()`"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{New UX Features in locusPackRat v0.7}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE
+)
+```
+
+# What's new
+
+locusPackRat v0.7 introduces several quality-of-life improvements:
+
+1. **`lpr_*` aliases** — every function now has a short, tab-completable alias
+2. **`lpr_check()`** — a diagnostic command that summarizes your project and flags issues
+3. **Lighter install** — `plotgardener` and `httr` are now optional (only needed when you use plotting or API queries)
+4. **Cross-platform zip** — `buildPacket()` works without a system `zip` command if the `zip` R package is installed
+
+# The `lpr_*` aliases
+
+All original function names still work. The aliases just give you a common `lpr_` prefix
+so you can type `lpr_` and Tab to see everything:
+
+| Original | Alias |
+|---|---|
+| `initPackRat()` | `lpr_init()` |
+| `addRatTable()` | `lpr_add_table()` |
+| `removeRatTable()` | `lpr_remove_table()` |
+| `listPackRatTables()` | `lpr_list_tables()` |
+| `makeGeneSheet()` | `lpr_export()` |
+| `buildPacket()` | `lpr_packet()` |
+| `generateLocusZoomPlot()` | `lpr_zoom()` |
+| `queryMouseMine()` | `lpr_query_mousemine()` |
+| `queryOpenTargets()` | `lpr_query_ot()` |
+| `queryOpenTargetsQTL()` | `lpr_query_ot_qtl()` |
+| `filterGenes()` | `lpr_filter()` |
+| `makeFilter()` | `lpr_make_filter()` |
+
+They are identical — `lpr_init` **is** `initPackRat`, not a wrapper:
+
+```{r alias-identity}
+library(locusPackRat)
+identical(lpr_init, initPackRat)
+identical(lpr_export, makeGeneSheet)
+```
+
+# Quick workflow using aliases
+
+```{r demo-workflow, message=TRUE}
+# Create a small demo project
+demo_dir <- file.path(tempdir(), "lpr_demo")
+
+lpr_init(
+  data = data.frame(
+    gene_symbol = c("Myh7", "Tnnt2", "Nppa", "Nppb", "Atp2a2"),
+    log2FC      = c(2.1, -0.8, 3.5, 2.9, -1.2)
+  ),
+  mode = "gene",
+  species = "mouse",
+  genome = "mm39",
+  project_dir = demo_dir,
+  force = TRUE
+)
+```
+
+## Adding supplementary data
+
+```{r add-table, message=TRUE}
+# Some made-up expression data
+expr_data <- data.frame(
+  gene_symbol = c("Myh7", "Tnnt2", "Nppa", "Nppb", "Atp2a2"),
+  tissue      = c("heart", "heart", "heart", "heart", "heart"),
+  tpm         = c(150.2, 89.4, 210.5, 180.3, 95.1)
+)
+
+lpr_add_table(
+  expr_data,
+  table_name = "tissue_expression",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  abbreviation = "te",
+  project_dir = demo_dir
+)
+```
+
+## Listing tables
+
+```{r list-tables, message=TRUE}
+lpr_list_tables(demo_dir)
+```
+
+# Project diagnostics with `lpr_check()`
+
+`lpr_check()` gives you a quick summary of a project's state — metadata, tables,
+outputs, and optional dependency availability:
+
+```{r check-demo, message=TRUE}
+lpr_check(demo_dir)
+```
+
+You can also capture the result for programmatic use:
+
+```{r check-result}
+status <- lpr_check(demo_dir, verbose = FALSE)
+status$valid
+status$config$species
+status$config$genome
+```
+
+## Running without a project
+
+If you point `lpr_check()` at a directory with no project, it tells you what to do:
+
+```{r check-no-project, message=TRUE}
+lpr_check(tempdir())
+```
+
+# Exporting a gene sheet
+
+```{r export-csv, message=TRUE}
+result <- lpr_export(
+  format = "csv",
+  output_file = "demo_sheet.csv",
+  project_dir = demo_dir
+)
+
+# The result is the gene sheet as a data.table (returned invisibly)
+head(result)
+```
+
+## Checking output staleness
+
+After exporting, `lpr_check()` tracks whether outputs are up to date. If you add
+more data after exporting, it will flag the output as stale:
+
+```{r staleness, message=TRUE}
+# Add another table after the export
+Sys.sleep(1)  # ensure file timestamp differs
+new_data <- data.frame(
+  gene_symbol = c("Myh7", "Tnnt2", "Nppa", "Nppb", "Atp2a2"),
+  pathway     = c("sarcomere", "sarcomere", "natriuretic", "natriuretic", "calcium")
+)
+
+lpr_add_table(
+  new_data,
+  table_name = "pathways",
+  link_type = "gene",
+  link_by = "gene_symbol",
+  abbreviation = "pw",
+  project_dir = demo_dir
+)
+
+# Now lpr_check will flag that the output is older than supplementary data
+lpr_check(demo_dir)
+```
+
+# Optional dependencies
+
+`plotgardener` and `httr` are no longer required at install time. They are only needed
+when you call the functions that use them:
+
+- **`lpr_zoom()`** needs `plotgardener` + a TxDb package for your genome
+- **`lpr_query_mousemine()`**, **`lpr_query_ot()`**, **`lpr_query_ot_qtl()`** need `httr`
+
+If a dependency is missing, you get a clear error with install instructions rather
+than a cryptic namespace failure.
+
+`lpr_check()` reports which optional dependencies are available in its dependency
+checks section.
+
+```{r cleanup, include=FALSE}
+unlink(demo_dir, recursive = TRUE)
+```

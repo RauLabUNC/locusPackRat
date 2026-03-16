@@ -1,7 +1,7 @@
 Package: locusPackRat
 Type: Package
 Title: Flexible R Package for Managing Genomic Analysis Projects
-Version: 0.6.3
+Version: 0.7.0
 Authors@R: c(
     person("Brian", "Gural", email = "bgural@unc.edu", role = c("aut", "cre")),
     person("Todd", "Kimball", role = "aut"),
@@ -24,10 +24,10 @@ Imports:
     data.table (>= 1.14.0),
     jsonlite (>= 1.8.0),
     openxlsx (>= 4.2.0),
-    dplyr (>= 1.0.0),
-    plotgardener,
-    httr
+    dplyr (>= 1.0.0)
 Suggests:
+    plotgardener,
+    httr,
     tidyr,
     RColorBrewer,
     GenomicRanges,
@@ -41,12 +41,15 @@ Suggests:
     devtools,
     usethis,
     TxDb.Mmusculus.UCSC.mm39.knownGene,
+    TxDb.Mmusculus.UCSC.mm10.knownGene,
     org.Mm.eg.db,
     liftOver,
     Seurat,
     ggplot2,
     TxDb.Hsapiens.UCSC.hg38.knownGene,
-    org.Hs.eg.db
+    TxDb.Hsapiens.UCSC.hg19.knownGene,
+    org.Hs.eg.db,
+    zip
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 URL: https://github.com/RauLabUNC/locusPackRat
