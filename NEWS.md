@@ -1,3 +1,18 @@
+# locusPackRat 0.6.3
+
+## Bug Fixes
+- **Locus zoom chromosome matching**: Added `.standardize_chrom()` helper that normalizes chromosome columns in scan and signal tables before rendering. Strips "chr" prefix from `chrom` values so they match `pgParams` convention (derived from `regions.csv`). Previously, data with "chr3" in `chrom` would silently produce an empty Manhattan/signal panel because it didn't match "3" from `pgParams`.
+- **Missing `.standardize_chrom()` function**: The function was referenced in `generateLocusZoomPlot()` but absent from source, causing errors on fresh installs. Now defined in `plotZoom.R`.
+
+## Improvements
+- `generateLocusZoomPlot()` now checks for `GenomicFeatures` package availability before attempting gene track rendering, with a clear install message on failure
+- Added `GenomicFeatures` to Suggests in DESCRIPTION
+
+## Notes
+- Users with `Seqinfo` >= 1.0.0 (Bioconductor 3.21+) should ensure `GenomeInfoDb` >= 1.46.0 is installed. Older `GenomeInfoDb` versions conflict with the `Seqinfo` package split, causing `plotGenes()` to fail with an opaque `seqinfo` method dispatch error. Upgrade via: `mamba install -c bioconda bioconductor-genomeinfodb=1.46.2` or `BiocManager::install("GenomeInfoDb")`
+
+---
+
 # locusPackRat 0.6.2
 
 ## New Features

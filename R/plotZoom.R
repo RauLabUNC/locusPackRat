@@ -198,7 +198,14 @@ generateLocusZoomPlot <- function(
                 "\nRun this command: ", install_cmd
             )
         }
-        
+
+        if (!requireNamespace("GenomicFeatures", quietly = TRUE)) {
+            stop(
+                "The 'GenomicFeatures' package is required for gene track plotting. ",
+                "Install it with: BiocManager::install('GenomicFeatures')"
+            )
+        }
+
         assembly <- plotgardener::assembly(
             Genome = genome_build,
             TxDb   = req_tx,
@@ -455,6 +462,24 @@ generateLocusZoomPlot <- function(
   )
   
   return(y + h + 0.5)
+}
+
+# Standardize chromosome column in a data.table:
+# - Ensure chr values are character
+# - Create chrom column from chr if missing
+# - Strip "chr" prefix so chrom values match pgParams convention (e.g. "3" not "chr3")
+.standardize_chrom <- function(dt) {
+    if (is.null(dt) || nrow(dt) == 0) return(dt)
+    if ("chr" %in% names(dt)) {
+        dt[, chr := as.character(chr)]
+    }
+    if (!"chrom" %in% names(dt) && "chr" %in% names(dt)) {
+        dt[, chrom := chr]
+    }
+    if ("chrom" %in% names(dt)) {
+        dt[, chrom := sub("^chr", "", chrom)]
+    }
+    return(dt)
 }
 
 .render_manhattan <- function(

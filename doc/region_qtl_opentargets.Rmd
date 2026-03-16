@@ -219,11 +219,10 @@ credsets_dt <- qtl_results$credible_sets
 if (!is.null(credsets_dt) && nrow(credsets_dt) > 0) {
   cat("QTL Credible Sets table:", nrow(credsets_dt), "rows\n\n")
 
-  # Select key columns for display
+  # Select key columns for display (L2G columns omitted -- see note below)
   display_cols <- intersect(
     c("study_id", "study_type", "chromosome", "position", "rsid",
-      "beta", "pvalue_mantissa", "pvalue_exponent",
-      "l2g_gene_symbol", "l2g_score"),
+      "beta", "pvalue_mantissa", "pvalue_exponent"),
     names(credsets_dt)
   )
 
@@ -237,10 +236,14 @@ if (!is.null(credsets_dt) && nrow(credsets_dt) > 0) {
   cat("\n\nSummary by study type:\n")
   print(credsets_dt[, .N, by = study_type])
 
-  if ("l2g_score" %in% names(credsets_dt)) {
-    cat("\nL2G score distribution:\n")
-    print(summary(credsets_dt$l2g_score))
-  }
+  cat("\nNote: L2G (locus-to-gene) prediction scores are primarily available",
+      "for GWAS credible sets.\n",
+      "molQTL studies (eQTL/pQTL) typically return empty L2G predictions",
+      "because the\n",
+      "QTL target gene is already known from the study design.",
+      "The l2g_gene_symbol and\n",
+      "l2g_score columns are retained in the stored data table",
+      "for use with GWAS queries.\n")
 } else {
   cat("No QTL credible sets found for the specified regions.\n")
 }

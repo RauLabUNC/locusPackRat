@@ -21,6 +21,9 @@ knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE
 )
+has_mouse_annot <- requireNamespace("TxDb.Mmusculus.UCSC.mm39.knownGene", quietly = TRUE) &&
+                   requireNamespace("org.Mm.eg.db", quietly = TRUE) &&
+                   requireNamespace("GenomicFeatures", quietly = TRUE)
 ```
 
 # Overview
@@ -348,7 +351,7 @@ listPackRatTables(project_dir = "qtl_analysis", full_info = TRUE)
 
 ### Generate Locus Plot
 
-```{r generate_QTL_plot}
+```{r generate_QTL_plot, eval=has_mouse_annot}
 generateLocusZoomPlot(
      region_id="region_1",
      project_dir="qtl_analysis",

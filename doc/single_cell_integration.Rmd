@@ -100,13 +100,19 @@ seurat_path <- system.file("extdata", "mini_heart_seurat.rds",
 if (!nzchar(seurat_path)) {
   seurat_path <- file.path("..", "inst", "extdata", "mini_heart_seurat.rds")
 }
-heart_seurat <- readRDS(seurat_path)
 
-# Inspect the object
-heart_seurat
+if (!file.exists(seurat_path)) {
+  message("mini_heart_seurat.rds not found -- skipping remaining chunks.")
+  knitr::opts_chunk$set(eval = FALSE)
+} else {
+  heart_seurat <- readRDS(seurat_path)
 
-# Cell type composition
-table(heart_seurat$cell_type)
+  # Inspect the object
+  heart_seurat
+
+  # Cell type composition
+  table(heart_seurat$cell_type)
+}
 ```
 
 For a real analysis, you would load a full scRNA-seq reference such as

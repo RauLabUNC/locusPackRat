@@ -606,88 +606,78 @@ most likely causal genes.</p>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(credsets_dt) <span class="sc">&amp;&amp;</span> <span class="fu">nrow</span>(credsets_dt) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;QTL Credible Sets table:&quot;</span>, <span class="fu">nrow</span>(credsets_dt), <span class="st">&quot;rows</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="co"># Select key columns for display</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="co"># Select key columns for display (L2G columns omitted -- see note below)</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  display_cols <span class="ot">&lt;-</span> <span class="fu">intersect</span>(</span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="fu">c</span>(<span class="st">&quot;study_id&quot;</span>, <span class="st">&quot;study_type&quot;</span>, <span class="st">&quot;chromosome&quot;</span>, <span class="st">&quot;position&quot;</span>, <span class="st">&quot;rsid&quot;</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>      <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;pvalue_mantissa&quot;</span>, <span class="st">&quot;pvalue_exponent&quot;</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>      <span class="st">&quot;l2g_gene_symbol&quot;</span>, <span class="st">&quot;l2g_score&quot;</span>),</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>    <span class="fu">names</span>(credsets_dt)</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  )</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Head of credible sets table:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(credsets_dt[, ..display_cols], <span class="dv">5</span>))</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Tail of credible sets table:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">tail</span>(credsets_dt[, ..display_cols], <span class="dv">5</span>))</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="co"># Summary statistics</span></span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">Summary by study type:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>  <span class="fu">print</span>(credsets_dt[, .N, <span class="at">by =</span> study_type])</span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a></span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">&quot;l2g_score&quot;</span> <span class="sc">%in%</span> <span class="fu">names</span>(credsets_dt)) {</span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">L2G score distribution:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">summary</span>(credsets_dt<span class="sc">$</span>l2g_score))</span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>  }</span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No QTL credible sets found for the specified regions.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>}</span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; QTL Credible Sets table: 191 rows</span></span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt; Head of credible sets table:</span></span>
-<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt;                                          study_id study_type chromosome</span></span>
-<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt;                                            &lt;char&gt;     &lt;char&gt;     &lt;char&gt;</span></span>
-<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt; 1:          blueprint_ge_monocyte_ensg00000083828       eqtl         19</span></span>
-<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a><span class="co">#&gt; 2: gtex_tx_heart_atrial_appendage_enst00000598183       eqtl         19</span></span>
-<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt; 3:          gtex_ge_artery_tibial_ensg00000083828       eqtl         19</span></span>
-<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co">#&gt; 4:       gtex_tx_skin_sun_exposed_enst00000598183       eqtl         19</span></span>
-<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt; 5:          gtex_tx_adrenal_gland_enst00000651718       eqtl         19</span></span>
-<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt;    position       rsid      beta pvalue_mantissa pvalue_exponent</span></span>
-<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;       &lt;int&gt;     &lt;list&gt;     &lt;num&gt;           &lt;num&gt;           &lt;int&gt;</span></span>
-<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt; 1: 57819143 rs35962362  0.743070           1.148              -7</span></span>
-<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt; 2: 57821405  rs7255684  0.517417           7.156             -11</span></span>
-<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt; 3: 57829516  rs2115384  0.481659           7.023             -14</span></span>
-<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a><span class="co">#&gt; 4: 57849960 rs28374851  0.406202           4.047             -12</span></span>
-<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a><span class="co">#&gt; 5: 57693820  rs9304799 -0.301088           1.022              -6</span></span>
-<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a><span class="co">#&gt;    l2g_gene_symbol l2g_score</span></span>
-<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a><span class="co">#&gt;             &lt;char&gt;     &lt;num&gt;</span></span>
-<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a><span class="co">#&gt; 1:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a><span class="co">#&gt; 2:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="co">#&gt; 3:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a><span class="co">#&gt; 4:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a><span class="co">#&gt; 5:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a><span class="co">#&gt; Tail of credible sets table:</span></span>
-<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a><span class="co">#&gt;                                                 study_id study_type chromosome</span></span>
-<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a><span class="co">#&gt;                                                   &lt;char&gt;     &lt;char&gt;     &lt;char&gt;</span></span>
-<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a><span class="co">#&gt; 1:      nedelec_2016_ge_macrophage_naive_ensg00000261210       eqtl         16</span></span>
-<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a><span class="co">#&gt; 2:            quach_2016_ge_monocyte_iav_ensg00000261210       eqtl         16</span></span>
-<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a><span class="co">#&gt; 3:      nedelec_2016_ge_macrophage_naive_ensg00000261210       eqtl         16</span></span>
-<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a><span class="co">#&gt; 4:           quach_2016_ge_monocyte_r848_ensg00000261210       eqtl         16</span></span>
-<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a><span class="co">#&gt; 5: nedelec_2016_ge_macrophage_salmonella_ensg00000261210       eqtl         16</span></span>
-<span id="cb9-63"><a href="#cb9-63" tabindex="-1"></a><span class="co">#&gt;    position        rsid      beta pvalue_mantissa pvalue_exponent</span></span>
-<span id="cb9-64"><a href="#cb9-64" tabindex="-1"></a><span class="co">#&gt;       &lt;int&gt;      &lt;list&gt;     &lt;num&gt;           &lt;num&gt;           &lt;int&gt;</span></span>
-<span id="cb9-65"><a href="#cb9-65" tabindex="-1"></a><span class="co">#&gt; 1: 19298899  rs66465307  0.787226           1.443              -7</span></span>
-<span id="cb9-66"><a href="#cb9-66" tabindex="-1"></a><span class="co">#&gt; 2: 19304838  rs58536649 -0.665561           5.067             -12</span></span>
-<span id="cb9-67"><a href="#cb9-67" tabindex="-1"></a><span class="co">#&gt; 3: 19304838  rs58536649 -0.808534           1.471             -14</span></span>
-<span id="cb9-68"><a href="#cb9-68" tabindex="-1"></a><span class="co">#&gt; 4: 19306095 rs111532635 -0.717730           3.351             -11</span></span>
-<span id="cb9-69"><a href="#cb9-69" tabindex="-1"></a><span class="co">#&gt; 5: 19306095 rs111532635 -0.663725           7.854             -14</span></span>
-<span id="cb9-70"><a href="#cb9-70" tabindex="-1"></a><span class="co">#&gt;    l2g_gene_symbol l2g_score</span></span>
-<span id="cb9-71"><a href="#cb9-71" tabindex="-1"></a><span class="co">#&gt;             &lt;char&gt;     &lt;num&gt;</span></span>
-<span id="cb9-72"><a href="#cb9-72" tabindex="-1"></a><span class="co">#&gt; 1:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-73"><a href="#cb9-73" tabindex="-1"></a><span class="co">#&gt; 2:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-74"><a href="#cb9-74" tabindex="-1"></a><span class="co">#&gt; 3:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-75"><a href="#cb9-75" tabindex="-1"></a><span class="co">#&gt; 4:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-76"><a href="#cb9-76" tabindex="-1"></a><span class="co">#&gt; 5:            &lt;NA&gt;        NA</span></span>
-<span id="cb9-77"><a href="#cb9-77" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-78"><a href="#cb9-78" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-79"><a href="#cb9-79" tabindex="-1"></a><span class="co">#&gt; Summary by study type:</span></span>
-<span id="cb9-80"><a href="#cb9-80" tabindex="-1"></a><span class="co">#&gt;    study_type     N</span></span>
-<span id="cb9-81"><a href="#cb9-81" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt; &lt;int&gt;</span></span>
-<span id="cb9-82"><a href="#cb9-82" tabindex="-1"></a><span class="co">#&gt; 1:       eqtl   191</span></span>
-<span id="cb9-83"><a href="#cb9-83" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-84"><a href="#cb9-84" tabindex="-1"></a><span class="co">#&gt; L2G score distribution:</span></span>
-<span id="cb9-85"><a href="#cb9-85" tabindex="-1"></a><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s </span></span>
-<span id="cb9-86"><a href="#cb9-86" tabindex="-1"></a><span class="co">#&gt;      NA      NA      NA     NaN      NA      NA     191</span></span></code></pre></div>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>      <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;pvalue_mantissa&quot;</span>, <span class="st">&quot;pvalue_exponent&quot;</span>),</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="fu">names</span>(credsets_dt)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  )</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;Head of credible sets table:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(credsets_dt[, ..display_cols], <span class="dv">5</span>))</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Tail of credible sets table:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">tail</span>(credsets_dt[, ..display_cols], <span class="dv">5</span>))</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="co"># Summary statistics</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">Summary by study type:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>  <span class="fu">print</span>(credsets_dt[, .N, <span class="at">by =</span> study_type])</span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Note: L2G (locus-to-gene) prediction scores are primarily available&quot;</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a>      <span class="st">&quot;for GWAS credible sets.</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a>      <span class="st">&quot;molQTL studies (eQTL/pQTL) typically return empty L2G predictions&quot;</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>      <span class="st">&quot;because the</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a>      <span class="st">&quot;QTL target gene is already known from the study design.&quot;</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a>      <span class="st">&quot;The l2g_gene_symbol and</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a>      <span class="st">&quot;l2g_score columns are retained in the stored data table&quot;</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a>      <span class="st">&quot;for use with GWAS queries.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;No QTL credible sets found for the specified regions.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a>}</span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; QTL Credible Sets table: 191 rows</span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt; Head of credible sets table:</span></span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a><span class="co">#&gt;                                          study_id study_type chromosome</span></span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt;                                            &lt;char&gt;     &lt;char&gt;     &lt;char&gt;</span></span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co">#&gt; 1:          blueprint_ge_monocyte_ensg00000083828       eqtl         19</span></span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt; 2: gtex_tx_heart_atrial_appendage_enst00000598183       eqtl         19</span></span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt; 3:          gtex_ge_artery_tibial_ensg00000083828       eqtl         19</span></span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt; 4:       gtex_tx_skin_sun_exposed_enst00000598183       eqtl         19</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt; 5:          gtex_tx_adrenal_gland_enst00000651718       eqtl         19</span></span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt;    position       rsid      beta pvalue_mantissa pvalue_exponent</span></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt;       &lt;int&gt;     &lt;list&gt;     &lt;num&gt;           &lt;num&gt;           &lt;int&gt;</span></span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a><span class="co">#&gt; 1: 57819143 rs35962362  0.743070           1.148              -7</span></span>
+<span id="cb9-46"><a href="#cb9-46" tabindex="-1"></a><span class="co">#&gt; 2: 57821405  rs7255684  0.517417           7.156             -11</span></span>
+<span id="cb9-47"><a href="#cb9-47" tabindex="-1"></a><span class="co">#&gt; 3: 57829516  rs2115384  0.481659           7.023             -14</span></span>
+<span id="cb9-48"><a href="#cb9-48" tabindex="-1"></a><span class="co">#&gt; 4: 57849960 rs28374851  0.406202           4.047             -12</span></span>
+<span id="cb9-49"><a href="#cb9-49" tabindex="-1"></a><span class="co">#&gt; 5: 57693820  rs9304799 -0.301088           1.022              -6</span></span>
+<span id="cb9-50"><a href="#cb9-50" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-51"><a href="#cb9-51" tabindex="-1"></a><span class="co">#&gt; Tail of credible sets table:</span></span>
+<span id="cb9-52"><a href="#cb9-52" tabindex="-1"></a><span class="co">#&gt;                                                 study_id study_type chromosome</span></span>
+<span id="cb9-53"><a href="#cb9-53" tabindex="-1"></a><span class="co">#&gt;                                                   &lt;char&gt;     &lt;char&gt;     &lt;char&gt;</span></span>
+<span id="cb9-54"><a href="#cb9-54" tabindex="-1"></a><span class="co">#&gt; 1:      nedelec_2016_ge_macrophage_naive_ensg00000261210       eqtl         16</span></span>
+<span id="cb9-55"><a href="#cb9-55" tabindex="-1"></a><span class="co">#&gt; 2:            quach_2016_ge_monocyte_iav_ensg00000261210       eqtl         16</span></span>
+<span id="cb9-56"><a href="#cb9-56" tabindex="-1"></a><span class="co">#&gt; 3:      nedelec_2016_ge_macrophage_naive_ensg00000261210       eqtl         16</span></span>
+<span id="cb9-57"><a href="#cb9-57" tabindex="-1"></a><span class="co">#&gt; 4:           quach_2016_ge_monocyte_r848_ensg00000261210       eqtl         16</span></span>
+<span id="cb9-58"><a href="#cb9-58" tabindex="-1"></a><span class="co">#&gt; 5: nedelec_2016_ge_macrophage_salmonella_ensg00000261210       eqtl         16</span></span>
+<span id="cb9-59"><a href="#cb9-59" tabindex="-1"></a><span class="co">#&gt;    position        rsid      beta pvalue_mantissa pvalue_exponent</span></span>
+<span id="cb9-60"><a href="#cb9-60" tabindex="-1"></a><span class="co">#&gt;       &lt;int&gt;      &lt;list&gt;     &lt;num&gt;           &lt;num&gt;           &lt;int&gt;</span></span>
+<span id="cb9-61"><a href="#cb9-61" tabindex="-1"></a><span class="co">#&gt; 1: 19298899  rs66465307  0.787226           1.443              -7</span></span>
+<span id="cb9-62"><a href="#cb9-62" tabindex="-1"></a><span class="co">#&gt; 2: 19304838  rs58536649 -0.665561           5.067             -12</span></span>
+<span id="cb9-63"><a href="#cb9-63" tabindex="-1"></a><span class="co">#&gt; 3: 19304838  rs58536649 -0.808534           1.471             -14</span></span>
+<span id="cb9-64"><a href="#cb9-64" tabindex="-1"></a><span class="co">#&gt; 4: 19306095 rs111532635 -0.717730           3.351             -11</span></span>
+<span id="cb9-65"><a href="#cb9-65" tabindex="-1"></a><span class="co">#&gt; 5: 19306095 rs111532635 -0.663725           7.854             -14</span></span>
+<span id="cb9-66"><a href="#cb9-66" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-67"><a href="#cb9-67" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-68"><a href="#cb9-68" tabindex="-1"></a><span class="co">#&gt; Summary by study type:</span></span>
+<span id="cb9-69"><a href="#cb9-69" tabindex="-1"></a><span class="co">#&gt;    study_type     N</span></span>
+<span id="cb9-70"><a href="#cb9-70" tabindex="-1"></a><span class="co">#&gt;        &lt;char&gt; &lt;int&gt;</span></span>
+<span id="cb9-71"><a href="#cb9-71" tabindex="-1"></a><span class="co">#&gt; 1:       eqtl   191</span></span>
+<span id="cb9-72"><a href="#cb9-72" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-73"><a href="#cb9-73" tabindex="-1"></a><span class="co">#&gt; Note: L2G (locus-to-gene) prediction scores are primarily available for GWAS credible sets.</span></span>
+<span id="cb9-74"><a href="#cb9-74" tabindex="-1"></a><span class="co">#&gt;  molQTL studies (eQTL/pQTL) typically return empty L2G predictions because the</span></span>
+<span id="cb9-75"><a href="#cb9-75" tabindex="-1"></a><span class="co">#&gt;  QTL target gene is already known from the study design. The l2g_gene_symbol and</span></span>
+<span id="cb9-76"><a href="#cb9-76" tabindex="-1"></a><span class="co">#&gt;  l2g_score columns are retained in the stored data table for use with GWAS queries.</span></span></code></pre></div>
 </div>
 </div>
 <div id="examine-project-structure" class="section level1">

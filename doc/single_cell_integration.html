@@ -443,9 +443,9 @@ evaluated for cell-type specificity.</p>
 <span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; Processing gene list...</span></span>
 <span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt;   Matched all 5 genes to coordinates</span></span>
 <span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; Generating orthology information...</span></span>
-<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; Saved gene data to /work/appscr/r/bgural/RtmpFanPIz/sc_demo_project/.locusPackRat/input/genes.csv</span></span>
-<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to /work/appscr/r/bgural/RtmpFanPIz/sc_demo_project/.locusPackRat/input/orthology.csv</span></span>
-<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; Created config file: /work/appscr/r/bgural/RtmpFanPIz/sc_demo_project/.locusPackRat/config.json</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; Saved gene data to /work/appscr/r/bgural/RtmpwHwfjY/sc_demo_project/.locusPackRat/input/genes.csv</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; Saved orthology data to /work/appscr/r/bgural/RtmpwHwfjY/sc_demo_project/.locusPackRat/input/orthology.csv</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; Created config file: /work/appscr/r/bgural/RtmpwHwfjY/sc_demo_project/.locusPackRat/config.json</span></span>
 <span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; locusPackRat project initialized successfully!</span></span>
 <span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; Mode: gene | Species: mouse | Genome: mm39</span></span>
@@ -474,21 +474,22 @@ immune) with pre-computed PCA and UMAP embeddings.</p>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">nzchar</span>(seurat_path)) {</span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  seurat_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">&quot;..&quot;</span>, <span class="st">&quot;inst&quot;</span>, <span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;mini_heart_seurat.rds&quot;</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>}</span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>heart_seurat <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(seurat_path)</span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Inspect the object</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>heart_seurat</span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; An object of class Seurat </span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 95 features across 200 samples within 1 assay </span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; Active assay: RNA (95 features, 50 variable features)</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;  3 layers present: counts, data, scale.data</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt;  2 dimensional reductions calculated: pca, umap</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(seurat_path)) {</span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;mini_heart_seurat.rds not found -- skipping remaining chunks.&quot;</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">eval =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  heart_seurat <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(seurat_path)</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="co"># Inspect the object</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  heart_seurat</span>
 <span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co"># Cell type composition</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="fu">table</span>(heart_seurat<span class="sc">$</span>cell_type)</span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; cardiomyocyte   endothelial    fibroblast        immune </span></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt;            50            50            50            50</span></span></code></pre></div>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  <span class="co"># Cell type composition</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>  <span class="fu">table</span>(heart_seurat<span class="sc">$</span>cell_type)</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>}</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; cardiomyocyte   endothelial    fibroblast        immune </span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt;            50            50            50            50</span></span></code></pre></div>
 <p>For a real analysis, you would load a full scRNA-seq reference such
 as Tabula Muris. The code below is provided as a reference but not
 executed:</p>
@@ -701,7 +702,7 @@ locusPackRat project as an additional evidence layer.</p>
 <span id="cb10-46"><a href="#cb10-46" tabindex="-1"></a>)</span>
 <span id="cb10-47"><a href="#cb10-47" tabindex="-1"></a><span class="co">#&gt; Adding supplementary table to mouse mm39 project...</span></span>
 <span id="cb10-48"><a href="#cb10-48" tabindex="-1"></a><span class="co">#&gt; Linking data by gene_symbol...</span></span>
-<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/RtmpFanPIz/sc_demo_project/.locusPackRat/supplementary/sc_cell_type_expression.csv</span></span>
+<span id="cb10-49"><a href="#cb10-49" tabindex="-1"></a><span class="co">#&gt; Saved supplementary table to /work/appscr/r/bgural/RtmpwHwfjY/sc_demo_project/.locusPackRat/supplementary/sc_cell_type_expression.csv</span></span>
 <span id="cb10-50"><a href="#cb10-50" tabindex="-1"></a><span class="co">#&gt; Linked 5 of 5 input rows</span></span>
 <span id="cb10-51"><a href="#cb10-51" tabindex="-1"></a><span class="co">#&gt; Updated config file</span></span></code></pre></div>
 <div id="project-state-after-integration" class="section level2">

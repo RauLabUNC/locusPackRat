@@ -37,7 +37,8 @@ skip_api <- on_cran || !api_available
 
 # Check for Bioconductor annotation packages needed for locus zoom plots
 has_bioc_annot <- requireNamespace("TxDb.Hsapiens.UCSC.hg38.knownGene", quietly = TRUE) &&
-                  requireNamespace("org.Hs.eg.db", quietly = TRUE)
+                  requireNamespace("org.Hs.eg.db", quietly = TRUE) &&
+                  requireNamespace("GenomicFeatures", quietly = TRUE)
 can_plot <- !skip_api && has_bioc_annot
 ```
 
