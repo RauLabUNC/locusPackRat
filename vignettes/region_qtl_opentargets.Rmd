@@ -363,7 +363,7 @@ Locus-to-Gene (L2G) scores range from 0 to 1, where higher scores indicate stron
 # Session Info
 
 ```{r session_info}
-sessionInfo()
+tryCatch(sessionInfo(), error = function(e) message("sessionInfo() unavailable"))
 ```
 
 # Cleanup
