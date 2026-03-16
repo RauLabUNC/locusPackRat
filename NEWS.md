@@ -1,3 +1,21 @@
+# locusPackRat 0.7.0
+
+## New Features
+- `lpr_check()` / `checkPackRat()`: diagnostic function that validates project state, checks file integrity, and reports optional dependency status
+- `lpr_*` aliases for all 12 exported functions (e.g., `lpr_init`, `lpr_export`, `lpr_query_ot`) — easier tab-completion and discoverability; both CamelCase and `lpr_*` names work identically
+- New vignette: `new_ux_features` demonstrating check and alias usage
+
+## Improvements
+- Moved `plotgardener` and `httr` from Imports to Suggests with `requireNamespace()` guards, reducing the install footprint for users who don't need locus zoom plots or MouseMine queries
+- `buildPacket()` zip creation now tries the `zip` R package first, then falls back to system `zip`, with an informative error if neither is available
+- Expanded README with install instructions for all 4 genome builds (hg38, hg19, mm39, mm10) and `lpr_*` quick-start examples
+
+## Internal
+- Consolidated duplicate helpers (`.render_genes`, `.standardize_chrom`) and `%||%` operator into single definitions
+- Added `zip` to Suggests
+
+---
+
 # locusPackRat 0.6.3
 
 ## Bug Fixes
