@@ -339,8 +339,3 @@ applyFilter <- function(data, filter, verbose = FALSE) {
 
   result
 }
-
-# Helper for NULL defaults (not exported)
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}

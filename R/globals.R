@@ -1,3 +1,7 @@
+# Null-coalescing operator
+# @noRd
+`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
+
 utils::globalVariables(c(
   "chr", "start", "end", "gene_symbol", "genes", "ensembl_id",
   "input_id", "region_id", "from_region", "mouse_gene_symbol",

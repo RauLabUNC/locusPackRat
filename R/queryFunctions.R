@@ -73,6 +73,10 @@ utils::globalVariables(c(
 #' @export
 queryMouseMine <- function(project_dir = ".", limit = NULL, chunk_size = 200) {
 
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop("Package 'httr' is required for this function. Install with: install.packages('httr')")
+  }
+
   packrat_dir <- file.path(project_dir, ".locusPackRat")
   if (!dir.exists(packrat_dir)) stop("Project not found.")
 
@@ -855,10 +859,6 @@ queryOpenTargets <- function(project_dir = ".",
   return(results)
 }
 
-
-#' Null-coalescing operator
-#' @noRd
-`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
 
 #' Query Open Targets for QTL Data

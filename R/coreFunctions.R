@@ -532,13 +532,24 @@ buildPacket <- function(project_dir = ".",
 
   files_to_zip <- list.files(".", full.names = FALSE, recursive = TRUE)
 
-  # Ensure zip command is available (R_ZIPCMD may be empty on some systems)
-  zip_cmd <- Sys.getenv("R_ZIPCMD")
-  if (!nzchar(zip_cmd)) {
-    zip_cmd <- Sys.which("zip")
-    if (!nzchar(zip_cmd)) stop("Cannot find a 'zip' program. Install zip or set R_ZIPCMD.")
+  # Create zip: prefer the 'zip' R package, fall back to system zip
+  if (requireNamespace("zip", quietly = TRUE)) {
+    zip::zipr(zip_path, files = files_to_zip)
+  } else {
+    zip_cmd <- Sys.getenv("R_ZIPCMD")
+    if (!nzchar(zip_cmd)) {
+      zip_cmd <- Sys.which("zip")
+      if (!nzchar(zip_cmd)) {
+        stop(
+          "No zip tool found. Either:\n",
+          "  1. Install the 'zip' R package: install.packages('zip')\n",
+          "  2. Install system zip (e.g., 'sudo apt install zip' on Linux)\n",
+          "  3. On Windows, install Rtools: https://cran.r-project.org/bin/windows/Rtools/"
+        )
+      }
+    }
+    utils::zip(zip_path, files = files_to_zip, zip = zip_cmd)
   }
-  utils::zip(zip_path, files = files_to_zip, zip = zip_cmd)
 
   zip_size <- .formatFileSize(file.info(zip_path)$size)
   message(sprintf("Packet created: %s (%s)", zip_path, zip_size))
